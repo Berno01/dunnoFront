@@ -29,7 +29,10 @@ import { VentaDTO } from '../../../../core/models/venta.models';
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
             @if (isAdmin()) {
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-              <label class="text-xs font-semibold tracking-[0.15em] md:tracking-[0.2em] text-gray-400">SUCURSAL</label>
+              <label
+                class="text-xs font-semibold tracking-[0.15em] md:tracking-[0.2em] text-gray-400"
+                >SUCURSAL</label
+              >
               <select
                 class="px-3 md:px-4 py-2 border border-black text-xs md:text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-black w-full sm:w-auto"
                 [ngModel]="selectedBranch()"
@@ -46,7 +49,9 @@ import { VentaDTO } from '../../../../core/models/venta.models';
 
           <!-- Derecha: Info y Acciones -->
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-6">
-            <span class="text-xs tracking-[0.15em] md:tracking-[0.2em] text-gray-400 text-center sm:text-left">
+            <span
+              class="text-xs tracking-[0.15em] md:tracking-[0.2em] text-gray-400 text-center sm:text-left"
+            >
               {{ sales().length }} REGISTROS
             </span>
 
@@ -104,7 +109,7 @@ import { VentaDTO } from '../../../../core/models/venta.models';
           <p class="text-sm tracking-wider">No se encontraron ventas</p>
         </div>
         } @else {
-        
+
         <!-- Vista Desktop: Tabla -->
         <div class="hidden md:block">
           <table class="w-full">
@@ -164,7 +169,9 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 [class.opacity-50]="sale.estado_venta === false"
               >
                 <td class="px-6 py-4 text-sm text-gray-900">{{ formatTime(sale.fecha_venta) }}</td>
-                <td class="px-6 py-4 text-sm text-gray-900">{{ getBranchName(sale.id_sucursal) }}</td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                  {{ getBranchName(sale.id_sucursal) }}
+                </td>
                 <td class="px-6 py-4 text-sm">
                   <span
                     class="px-2 py-1 text-xs font-medium"
@@ -270,10 +277,22 @@ import { VentaDTO } from '../../../../core/models/venta.models';
             <!-- Header: Hora + Estado -->
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <svg
+                  class="w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
                 </svg>
-                <span class="text-sm font-semibold text-gray-900">{{ formatTime(sale.fecha_venta) }}</span>
+                <span class="text-sm font-semibold text-gray-900">{{
+                  formatTime(sale.fecha_venta)
+                }}</span>
               </div>
               <span
                 class="px-2 py-1 text-xs font-bold rounded"
@@ -290,7 +309,9 @@ import { VentaDTO } from '../../../../core/models/venta.models';
             <div class="grid grid-cols-2 gap-3 mb-3 text-xs">
               <div>
                 <span class="text-gray-500 uppercase tracking-wide">Sucursal</span>
-                <p class="text-gray-900 font-medium mt-0.5">{{ getBranchName(sale.id_sucursal) }}</p>
+                <p class="text-gray-900 font-medium mt-0.5">
+                  {{ getBranchName(sale.id_sucursal) }}
+                </p>
               </div>
               <div>
                 <span class="text-gray-500 uppercase tracking-wide">Tipo</span>
@@ -313,19 +334,21 @@ import { VentaDTO } from '../../../../core/models/venta.models';
               @if (sale.monto_efectivo > 0) {
               <div class="flex justify-between">
                 <span class="text-gray-600">Efectivo</span>
-                <span class="font-medium text-gray-900">Bs. {{ sale.monto_efectivo.toFixed(2) }}</span>
+                <span class="font-medium text-gray-900"
+                  >Bs. {{ sale.monto_efectivo.toFixed(2) }}</span
+                >
               </div>
-              }
-              @if (sale.monto_qr > 0) {
+              } @if (sale.monto_qr > 0) {
               <div class="flex justify-between">
                 <span class="text-gray-600">QR</span>
                 <span class="font-medium text-gray-900">Bs. {{ sale.monto_qr.toFixed(2) }}</span>
               </div>
-              }
-              @if (sale.monto_tarjeta > 0) {
+              } @if (sale.monto_tarjeta > 0) {
               <div class="flex justify-between">
                 <span class="text-gray-600">Tarjeta</span>
-                <span class="font-medium text-gray-900">Bs. {{ sale.monto_tarjeta.toFixed(2) }}</span>
+                <span class="font-medium text-gray-900"
+                  >Bs. {{ sale.monto_tarjeta.toFixed(2) }}</span
+                >
               </div>
               }
               <div class="flex justify-between pt-1.5 border-t border-gray-200">
@@ -343,7 +366,12 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 (click)="onEditSale(sale)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  ></path>
                 </svg>
                 EDITAR
               </button>
@@ -353,7 +381,12 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 (click)="onDeleteSale(sale)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  ></path>
                 </svg>
                 ANULAR
               </button>
@@ -364,7 +397,12 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 (click)="onActivateSale(sale)"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
                 </svg>
                 REACTIVAR
               </button>

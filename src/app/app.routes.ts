@@ -59,6 +59,32 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'drops',
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/drops/components/drops-list/drops-list.component').then(
+            (m) => m.DropsListComponent
+          ),
+      },
+      {
+        path: 'nueva',
+        loadComponent: () =>
+          import('./features/drops/layout/drops-layout.component').then(
+            (m) => m.DropsLayoutComponent
+          ),
+      },
+      {
+        path: 'editar/:id',
+        loadComponent: () =>
+          import('./features/drops/layout/drops-layout.component').then(
+            (m) => m.DropsLayoutComponent
+          ),
+      },
+    ],
+  },
+  {
     path: '**',
     redirectTo: 'ventas',
   },

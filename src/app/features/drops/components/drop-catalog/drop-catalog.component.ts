@@ -2,25 +2,23 @@ import {
   Component,
   computed,
   inject,
-  OnInit,
   signal,
   ChangeDetectionStrategy,
-  effect,
   PLATFORM_ID,
+  OnInit,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CatalogService } from '../../services/catalog.service';
-import { SessionService } from '../../../../core/services/session.service';
-import { ResumenPrendaDTO } from '../../../../core/models/catalogo.models';
-import { ProductCardComponent } from '../product-card/product-card.component';
-import { ProductDetailModalComponent } from '../product-detail-modal/product-detail-modal.component';
+import { DropsService } from '../../../../core/services/drops.service';
+import { CatalogoItemDrop } from '../../../../core/models/drops.models';
+import { DropProductCardComponent } from '../drop-product-card/drop-product-card.component';
+import { DropProductDetailModalComponent } from '../drop-product-detail-modal/drop-product-detail-modal.component';
 import { take } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-catalog',
+  selector: 'app-drop-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProductCardComponent, ProductDetailModalComponent],
+  imports: [CommonModule, FormsModule, DropProductCardComponent, DropProductDetailModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col h-full bg-white">
@@ -73,7 +71,7 @@ import { take } from 'rxjs/operators';
                 </svg>
               </button>
 
-              <!-- Dropdown Menu Simulado -->
+              <!-- Dropdown Menu -->
               @if (showCategoryMenu()) {
               <div
                 class="absolute top-full left-0 mt-2 w-40 md:w-48 bg-white shadow-xl border border-gray-100 py-2 rounded-sm z-20"
@@ -96,21 +94,6 @@ import { take } from 'rxjs/operators';
               </div>
               }
             </div>
-
-            <!-- Dropdown Tallas (Visual por ahora) -->
-            <button
-              class="flex items-center gap-1 text-[10px] md:text-xs font-bold text-gray-400 hover:text-black uppercase tracking-wider transition-colors"
-            >
-              TALLAS
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 9l-7 7-7-7"
-                ></path>
-              </svg>
-            </button>
           </div>
         </div>
       </header>
@@ -133,10 +116,10 @@ import { take } from 'rxjs/operators';
           class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-x-3 md:gap-x-6 gap-y-6 md:gap-y-10"
         >
           @for (product of filteredProducts(); track product.idModelo) {
-          <app-product-card
+          <app-drop-product-card
             [product]="product"
             (cardClick)="onProductClick($event)"
-          ></app-product-card>
+          ></app-drop-product-card>
           }
         </div>
         }
@@ -144,21 +127,19 @@ import { take } from 'rxjs/operators';
     </div>
 
     @if (detailModalOpen() && activeProductId() !== null) {
-    <app-product-detail-modal
+    <app-drop-product-detail-modal
       [idModelo]="activeProductId()!"
-      [sucursalId]="sessionService.sucursalId()"
       (closed)="closeProductDetail()"
-    ></app-product-detail-modal>
+    ></app-drop-product-detail-modal>
     }
   `,
 })
-export class CatalogComponent {
-  private catalogService = inject(CatalogService);
-  protected sessionService = inject(SessionService);
+export class DropCatalogComponent implements OnInit {
+  private dropsService = inject(DropsService);
   private platformId = inject(PLATFORM_ID);
 
   // Signals de Estado
-  products = signal<ResumenPrendaDTO[]>([]);
+  products = signal<CatalogoItemDrop[]>([]);
   loading = signal<boolean>(true);
   detailModalOpen = signal<boolean>(false);
   activeProductId = signal<number | null>(null);
@@ -167,16 +148,6 @@ export class CatalogComponent {
   searchQuery = signal<string>('');
   selectedCategory = signal<string | null>(null);
   showCategoryMenu = signal<boolean>(false);
-
-  constructor() {
-    // Recargar catálogo automáticamente cuando cambie la sucursal
-    effect(() => {
-      if (isPlatformBrowser(this.platformId)) {
-        const sucursalId = this.sessionService.sucursalId();
-        this.loadCatalog(sucursalId);
-      }
-    });
-  }
 
   // Computed Signals
   filteredProducts = computed(() => {
@@ -200,107 +171,50 @@ export class CatalogComponent {
     return Array.from(categories).sort();
   });
 
-  ngOnInit() {
-    // El effect en el constructor ya maneja la carga inicial
+  ngOnInit(): void {
+    this.loadCatalog();
   }
 
-  loadCatalog(sucursalId: number) {
+  private loadCatalog(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.loading.set(true);
-    this.catalogService
-      .getCatalog(sucursalId)
+    this.dropsService
+      .getCatalogoParaSelector()
       .pipe(take(1))
       .subscribe({
-        next: (data) => {
-          this.products.set(data);
+        next: (productos) => {
+          this.products.set(productos);
           this.loading.set(false);
         },
         error: (err) => {
-          console.error('Error cargando catálogo', err);
-          // Mock data fallback para visualización si falla API
-          this.products.set(MOCK_PRODUCTS);
+          console.error('Error cargando catálogo:', err);
           this.loading.set(false);
         },
       });
   }
 
-  toggleCategoryMenu() {
-    this.showCategoryMenu.update((v) => !v);
+  onProductClick(product: CatalogoItemDrop): void {
+    this.activeProductId.set(product.idModelo);
+    this.detailModalOpen.set(true);
   }
 
-  selectCategory(category: string | null) {
+  closeProductDetail(): void {
+    this.detailModalOpen.set(false);
+    this.activeProductId.set(null);
+  }
+
+  toggleCategoryMenu(): void {
+    this.showCategoryMenu.update((val) => !val);
+  }
+
+  selectCategory(category: string | null): void {
     this.selectedCategory.set(category);
     this.showCategoryMenu.set(false);
   }
 
-  clearFilters() {
+  clearFilters(): void {
     this.searchQuery.set('');
     this.selectedCategory.set(null);
   }
-
-  onProductClick(product: ResumenPrendaDTO) {
-    this.openProductDetail(product.idModelo);
-  }
-
-  private openProductDetail(productId: number) {
-    this.activeProductId.set(productId);
-    this.detailModalOpen.set(true);
-  }
-
-  closeProductDetail() {
-    this.detailModalOpen.set(false);
-    this.activeProductId.set(null);
-  }
 }
-
-// Datos Mock para probar visualmente sin backend
-const MOCK_PRODUCTS: ResumenPrendaDTO[] = [
-  {
-    idModelo: 1,
-    nombreModelo: 'Oversized Heavy Hoodie',
-    nombreMarca: 'Essentials',
-    nombreCategoria: 'HOODIE',
-    fotoPortada:
-      'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=500',
-    stockTotal: 15,
-    pocasUnidades: false,
-  },
-  {
-    idModelo: 2,
-    nombreModelo: 'Essential Boxy Tee',
-    nombreMarca: 'Nike',
-    nombreCategoria: 'POLERA',
-    fotoPortada:
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=500',
-    stockTotal: 5,
-    pocasUnidades: true,
-  },
-  {
-    idModelo: 3,
-    nombreModelo: 'Wide Leg Cargo Pants',
-    nombreMarca: 'Adidas',
-    nombreCategoria: 'PANTALÓN',
-    fotoPortada:
-      'https://images.unsplash.com/photo-1517438476312-10d79c077509?auto=format&fit=crop&q=80&w=500',
-    stockTotal: 0,
-    pocasUnidades: false,
-  },
-  {
-    idModelo: 4,
-    nombreModelo: 'Signature Cap',
-    nombreMarca: 'New Era',
-    nombreCategoria: 'ACCESORIO',
-    fotoPortada:
-      'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=500',
-    stockTotal: 20,
-    pocasUnidades: false,
-  },
-  {
-    idModelo: 5,
-    nombreModelo: 'Zip-Up Polar Fleece',
-    nombreMarca: 'North Face',
-    nombreCategoria: 'CHAQUETA',
-    fotoPortada: '', // Test placeholder
-    stockTotal: 8,
-    pocasUnidades: false,
-  },
-];

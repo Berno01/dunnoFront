@@ -12,7 +12,9 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="h-[calc(100vh-5rem)] flex flex-col overflow-hidden bg-white">
       <!-- Header con botón de volver -->
-      <div class="px-3 md:px-6 py-3 md:py-4 border-b border-gray-100 flex items-center gap-2 md:gap-4">
+      <div
+        class="px-3 md:px-6 py-3 md:py-4 border-b border-gray-100 flex items-center gap-2 md:gap-4"
+      >
         <button
           type="button"
           class="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm text-gray-600 hover:text-black transition-colors group"
@@ -35,7 +37,9 @@ import { CommonModule } from '@angular/common';
           <span class="font-medium tracking-wide sm:hidden">VOLVER</span>
         </button>
         <div class="h-4 w-px bg-gray-200 hidden md:block"></div>
-        <span class="text-[10px] md:text-xs tracking-[0.15em] md:tracking-[0.2em] text-gray-400 uppercase truncate">
+        <span
+          class="text-[10px] md:text-xs tracking-[0.15em] md:tracking-[0.2em] text-gray-400 uppercase truncate"
+        >
           {{ isEditMode ? 'Editar #' + editingId : 'Nueva Venta' }}
         </span>
       </div>
@@ -81,10 +85,15 @@ import { CommonModule } from '@angular/common';
         </svg>
         <div class="flex flex-col items-start">
           <span class="text-xs font-bold tracking-wider">CARRITO</span>
-          <span class="text-[10px] text-gray-300">{{ ventasStore.cantidadTotalArticulos() }} items · Bs. {{ ventasStore.totalVenta().toFixed(2) }}</span>
+          <span class="text-[10px] text-gray-300"
+            >{{ ventasStore.cantidadTotalArticulos() }} items · Bs.
+            {{ ventasStore.totalVenta().toFixed(2) }}</span
+          >
         </div>
         @if (ventasStore.cantidadTotalArticulos() > 0) {
-        <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+        <div
+          class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center"
+        >
           {{ ventasStore.cantidadTotalArticulos() }}
         </div>
         }
@@ -146,21 +155,29 @@ import { CommonModule } from '@angular/common';
       :host {
         display: block;
       }
-      
+
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
-      
+
       @keyframes slideUp {
-        from { transform: translateY(100%); }
-        to { transform: translateY(0); }
+        from {
+          transform: translateY(100%);
+        }
+        to {
+          transform: translateY(0);
+        }
       }
-      
+
       .animate-fadeIn {
         animation: fadeIn 0.2s ease-out;
       }
-      
+
       .animate-slideUp {
         animation: slideUp 0.3s ease-out;
       }
@@ -197,7 +214,7 @@ export class VentasLayoutComponent implements OnInit {
   }
 
   toggleCartModal() {
-    this.cartModalOpen.update(v => !v);
+    this.cartModalOpen.update((v) => !v);
   }
 
   clearCart() {

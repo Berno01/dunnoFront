@@ -13,13 +13,17 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ColorDTO, DetallePrendaDTO, TallaDTO } from '../../../../core/models/catalogo.models';
-import { CatalogService } from '../../services/catalog.service';
-import { VentasStoreService } from '../../../../core/services/ventas-store.service';
+import {
+  ColorDropDetalle,
+  ModeloDetalleDrop,
+  TallaDropDetalle,
+} from '../../../../core/models/drops.models';
+import { DropsService } from '../../../../core/services/drops.service';
+import { DropsStoreService } from '../../services/drops-store.service';
 import { take } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-product-detail-modal',
+  selector: 'app-drop-product-detail-modal',
   standalone: true,
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -149,37 +153,22 @@ import { take } from 'rxjs/operators';
                 </button>
                 }
               </div>
-              @if (selectedSize()) {
-              <div
-                class="flex items-center gap-2 text-[10px] md:text-xs"
-                [class.text-emerald-600]="currentStock() > 0"
-                [class.text-red-500]="currentStock() === 0"
-              >
-                <span
-                  class="h-2 w-2 rounded-full"
-                  [class.bg-emerald-500]="currentStock() > 0"
-                  [class.bg-red-500]="currentStock() === 0"
-                ></span>
-                <span> Stock disponible: {{ currentStock() }} unidades </span>
-              </div>
-              }
             </div>
 
-            <!-- Input de Precio -->
+            <!-- Input de Cantidad -->
             <div class="space-y-2 md:space-y-3">
               <label
                 class="text-[10px] md:text-xs font-semibold tracking-[0.15em] md:tracking-[0.2em] text-gray-500"
-                >PRECIO</label
+                >CANTIDAD A INGRESAR</label
               >
               <div class="flex items-center gap-2 border-b border-gray-300 pb-2">
-                <span class="text-base md:text-lg font-semibold text-gray-500">Bs.</span>
                 <input
                   type="number"
-                  min="0"
-                  step="0.01"
+                  min="1"
+                  step="1"
                   class="w-full text-xl md:text-3xl font-semibold text-gray-900 outline-none"
-                  [ngModel]="priceInput()"
-                  (ngModelChange)="onPriceInput($event)"
+                  [ngModel]="quantityInput()"
+                  (ngModelChange)="onQuantityInput($event)"
                   placeholder="0"
                 />
               </div>
@@ -198,20 +187,13 @@ import { take } from 'rxjs/operators';
               </button>
               <button
                 type="button"
-                class="px-4 md:px-8 py-2.5 md:py-3 bg-black text-white text-xs md:text-sm font-semibold tracking-[0.15em] md:tracking-[0.2em] disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                class="px-4 md:px-6 py-2 md:py-3 bg-black text-white text-xs md:text-sm font-semibold tracking-[0.15em] md:tracking-[0.2em] hover:bg-gray-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                 [disabled]="!canAddToCart()"
                 (click)="onAddToCart()"
               >
-                <span class="hidden sm:inline">AGREGAR AL CARRITO</span>
-                <span class="sm:hidden">AGREGAR</span>
+                AGREGAR AL DROP
               </button>
             </div>
-          </div>
-          } @else {
-          <div
-            class="flex flex-col items-center justify-center h-full text-xs md:text-sm text-gray-500"
-          >
-            Error al cargar el producto.
           </div>
           }
         </div>
@@ -219,141 +201,121 @@ import { take } from 'rxjs/operators';
     </div>
   `,
 })
-export class ProductDetailModalComponent implements OnChanges {
+export class DropProductDetailModalComponent implements OnChanges {
   @Input({ required: true }) idModelo!: number;
-  @Input({ required: true }) sucursalId!: number;
   @Output() closed = new EventEmitter<void>();
 
-  private catalogService = inject(CatalogService);
-  private ventasStore = inject(VentasStoreService);
+  private dropsService = inject(DropsService);
+  private dropsStore = inject(DropsStoreService);
   private platformId = inject(PLATFORM_ID);
 
-  product = signal<DetallePrendaDTO | null>(null);
+  // Signals de Estado
+  product = signal<ModeloDetalleDrop | null>(null);
   loading = signal<boolean>(true);
-  selectedColor = signal<ColorDTO | null>(null);
-  selectedSize = signal<TallaDTO | null>(null);
-  customPrice = signal<number>(0);
-  priceInput = signal<string>('');
+  selectedColor = signal<ColorDropDetalle | null>(null);
+  selectedSize = signal<TallaDropDetalle | null>(null);
+  quantityInput = signal<number>(1);
 
-  currentStock = computed(() => this.selectedSize()?.stock ?? 0);
-
+  // Computed Signals
   availableSizes = computed(() => this.selectedColor()?.tallas ?? []);
-
-  priceDisplay = computed(() => {
-    const value = this.priceInput();
-    return value && !isNaN(Number(value)) ? value : '0';
-  });
 
   primaryImage = computed(() => {
     const color = this.selectedColor();
-    const fallback = this.product()?.colores?.[0]?.fotoUrl ?? '';
-    return this.resolveImageUrl(color?.fotoUrl || fallback);
+    const fotoUrl = color?.fotoUrl ?? '';
+
+    if (!fotoUrl.trim()) {
+      return '/assets/images/placeholder-product.svg';
+    }
+
+    if (/^https?:\/\//i.test(fotoUrl)) {
+      return fotoUrl;
+    }
+
+    const sanitizedPath = fotoUrl.replace(/^\/+/, '');
+    return `/assets/images/${sanitizedPath}`;
   });
 
   canAddToCart = computed(() => {
     return (
-      !!this.selectedColor() &&
-      !!this.selectedSize() &&
-      this.customPrice() > 0 &&
-      this.currentStock() > 0
+      this.selectedColor() !== null && this.selectedSize() !== null && this.quantityInput() > 0
     );
   });
 
   ngOnChanges(changes: SimpleChanges): void {
-    if ((changes['idModelo'] && this.idModelo) || (changes['sucursalId'] && this.sucursalId)) {
-      this.fetchProductDetail();
+    if (changes['idModelo'] && this.idModelo) {
+      this.loadProductDetail();
     }
   }
 
-  onCloseRequest() {
-    this.closed.emit();
-  }
-
-  onSelectColor(color: ColorDTO) {
-    this.selectedColor.set(color);
-    this.selectedSize.set(null);
-  }
-
-  onSelectSize(talla: TallaDTO) {
-    this.selectedSize.set(talla);
-  }
-
-  onPriceInput(value: string) {
-    this.priceInput.set(value);
-    const parsed = parseFloat(value);
-    this.customPrice.set(isNaN(parsed) ? 0 : parsed);
-  }
-
-  onAddToCart() {
-    if (!this.canAddToCart()) {
-      return;
-    }
-
-    const product = this.product();
-    const color = this.selectedColor();
-    const size = this.selectedSize();
-    const price = this.customPrice();
-
-    if (!product || !color || !size || price <= 0) {
-      return;
-    }
-
-    this.ventasStore.addItem(product, color, size, price);
-    this.onCloseRequest();
-  }
-
-  getColorHex(color: ColorDTO): string {
-    const base = color.codigoHex ?? '';
-    if (!base) {
-      return '#000000';
-    }
-
-    return base.startsWith('#') ? base : `#${base}`;
-  }
-
-  private fetchProductDetail() {
-    if (!this.idModelo || !this.sucursalId) {
-      return;
-    }
-
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
+  private loadProductDetail(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
 
     this.loading.set(true);
-    this.product.set(null);
-    this.selectedColor.set(null);
-    this.selectedSize.set(null);
-    this.customPrice.set(0);
-    this.priceInput.set('');
-
-    this.catalogService
-      .getProductDetail(this.idModelo, this.sucursalId)
+    this.dropsService
+      .getDetalleModelo(this.idModelo)
       .pipe(take(1))
       .subscribe({
-        next: (data) => {
-          this.product.set(data);
-          const initialColor = data.colores?.[0] ?? null;
-          this.selectedColor.set(initialColor);
+        next: (producto) => {
+          this.product.set(producto);
+          // Auto-seleccionar primer color si existe
+          if (producto.colores && producto.colores.length > 0) {
+            this.onSelectColor(producto.colores[0]);
+          }
           this.loading.set(false);
         },
         error: (err) => {
-          console.error('Error cargando el detalle del producto', err);
+          console.error('Error cargando detalle del producto:', err);
           this.loading.set(false);
         },
       });
   }
 
-  private resolveImageUrl(path: string | undefined | null): string {
-    if (!path) {
-      return '/assets/images/placeholder-product.svg';
-    }
+  onSelectColor(color: ColorDropDetalle): void {
+    this.selectedColor.set(color);
+    this.selectedSize.set(null); // Resetear talla al cambiar color
+  }
 
-    if (/^https?:\/\//i.test(path)) {
-      return path;
-    }
+  onSelectSize(talla: TallaDropDetalle): void {
+    this.selectedSize.set(talla);
+  }
 
-    const sanitizedPath = path.replace(/^\/+/, '');
-    return `/assets/images/${sanitizedPath}`;
+  onQuantityInput(value: number): void {
+    if (value < 1) {
+      this.quantityInput.set(1);
+    } else {
+      this.quantityInput.set(Math.floor(value));
+    }
+  }
+
+  getColorHex(color: ColorDropDetalle): string {
+    return color.codigoHex || '#000000';
+  }
+
+  onAddToCart(): void {
+    if (!this.canAddToCart()) return;
+
+    const producto = this.product();
+    const color = this.selectedColor();
+    const talla = this.selectedSize();
+    const cantidad = this.quantityInput();
+
+    if (!producto || !color || !talla) return;
+
+    this.dropsStore.addItem({
+      idVariante: talla.idVariante,
+      idModelo: producto.idModelo,
+      nombreModelo: producto.nombreModelo,
+      nombreMarca: producto.nombreMarca,
+      nombreColor: color.nombreColor,
+      nombreTalla: talla.nombreTalla,
+      fotoUrl: color.fotoUrl,
+      cantidad: cantidad,
+    });
+
+    this.onCloseRequest();
+  }
+
+  onCloseRequest(): void {
+    this.closed.emit();
   }
 }

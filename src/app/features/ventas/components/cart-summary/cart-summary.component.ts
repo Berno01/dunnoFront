@@ -24,7 +24,9 @@ import { take } from 'rxjs/operators';
       <!-- Header (Solo visible en desktop) -->
       <div class="hidden lg:flex px-3 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-white">
         <div class="flex items-center justify-between w-full">
-          <h2 class="text-xs md:text-sm font-bold tracking-[0.15em] md:tracking-[0.2em] text-gray-900">
+          <h2
+            class="text-xs md:text-sm font-bold tracking-[0.15em] md:tracking-[0.2em] text-gray-900"
+          >
             RESUMEN ({{ itemCount() }})
           </h2>
           @if (itemCount() > 0) {
@@ -43,7 +45,12 @@ import { take } from 'rxjs/operators';
       <div class="flex-1 overflow-y-auto px-3 md:px-6 py-3 md:py-4">
         @if (itemCount() === 0) {
         <div class="flex flex-col items-center justify-center h-full text-gray-400">
-          <svg class="w-12 md:w-16 h-12 md:h-16 mb-3 md:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            class="w-12 md:w-16 h-12 md:h-16 mb-3 md:mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -81,7 +88,9 @@ import { take } from 'rxjs/operators';
                   >
                     -
                   </button>
-                  <span class="text-xs md:text-sm font-medium w-7 md:w-8 text-center">{{ item.cantidad }}</span>
+                  <span class="text-xs md:text-sm font-medium w-7 md:w-8 text-center">{{
+                    item.cantidad
+                  }}</span>
                   <button
                     type="button"
                     class="w-7 h-7 md:w-6 md:h-6 flex items-center justify-center border border-gray-300 text-gray-600 hover:bg-gray-100 text-sm"
@@ -104,7 +113,9 @@ import { take } from 'rxjs/operators';
 
       <!-- Payment & Total Section -->
       @if (itemCount() > 0) {
-      <div class="border-t border-gray-200 bg-white px-3 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4">
+      <div
+        class="border-t border-gray-200 bg-white px-3 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4"
+      >
         <!-- Subtotal -->
         <div class="flex items-center justify-between text-xs md:text-sm">
           <span class="text-gray-600">Subtotal</span>
@@ -120,7 +131,9 @@ import { take } from 'rxjs/operators';
         <!-- Total -->
         <div class="flex items-center justify-between pt-2 border-t border-gray-200">
           <span class="text-xs md:text-sm font-bold tracking-wider text-gray-900">Total</span>
-          <span class="text-lg md:text-xl font-bold text-gray-900">Bs. {{ total().toFixed(2) }}</span>
+          <span class="text-lg md:text-xl font-bold text-gray-900"
+            >Bs. {{ total().toFixed(2) }}</span
+          >
         </div>
 
         <!-- Payment Method Buttons -->
@@ -195,7 +208,12 @@ import { take } from 'rxjs/operators';
             [class.border-gray-300]="tipoVenta() !== 'LOCAL'"
             (click)="onSelectTipoVenta('LOCAL')"
           >
-            <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              class="w-3.5 h-3.5 md:w-4 md:h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -216,7 +234,12 @@ import { take } from 'rxjs/operators';
             [class.border-gray-300]="tipoVenta() !== 'ENVIO'"
             (click)="onSelectTipoVenta('ENVIO')"
           >
-            <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              class="w-3.5 h-3.5 md:w-4 md:h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -257,7 +280,9 @@ import { take } from 'rxjs/operators';
             ></path>
           </svg>
           }
-          <span class="hidden sm:inline">{{ processing() ? 'PROCESANDO...' : 'CONFIRMAR VENTA' }}</span>
+          <span class="hidden sm:inline">{{
+            processing() ? 'PROCESANDO...' : 'CONFIRMAR VENTA'
+          }}</span>
           <span class="sm:hidden">{{ processing() ? 'PROCESANDO...' : 'CONFIRMAR' }}</span>
         </button>
       </div>

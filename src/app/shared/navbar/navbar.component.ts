@@ -147,7 +147,9 @@ import { SessionService } from '../../core/services/session.service';
 
       <!-- Menú Mobile (Dropdown) -->
       @if (menuOpen()) {
-      <div class="md:hidden absolute top-20 left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-40">
+      <div
+        class="md:hidden absolute top-20 left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-40"
+      >
         <div class="px-4 py-4 space-y-2">
           <!-- Dashboard -->
           <a
