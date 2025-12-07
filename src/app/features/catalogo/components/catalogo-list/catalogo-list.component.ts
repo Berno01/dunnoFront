@@ -28,14 +28,14 @@ import {
   template: `
     <div class="min-h-screen bg-white">
       <!-- Header con Filtros y Buscador -->
-      <header class="sticky top-0 z-10 bg-white border-b border-gray-100 px-8 py-6">
-        <div class="flex items-center justify-between">
-          <!-- Filtros (Izquierda) -->
-          <div class="flex items-center gap-8">
+      <header class="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 md:px-8 py-4 md:py-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <!-- Filtros (Arriba en mobile, Izquierda en desktop) -->
+          <div class="flex flex-wrap items-center gap-3 md:gap-8">
             <!-- Dropdown Categoría -->
             <div class="relative group">
               <button
-                class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-black transition-colors uppercase tracking-wider"
+                class="flex items-center gap-2 text-xs md:text-sm font-medium text-gray-700 hover:text-black transition-colors uppercase tracking-wider"
                 (click)="toggleDropdown('categoria')"
               >
                 {{ selectedCategoria() ? selectedCategoria()!.nombre : 'CATEGORÍA' }}
@@ -75,7 +75,7 @@ import {
             <!-- Dropdown Marca -->
             <div class="relative group">
               <button
-                class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-black transition-colors uppercase tracking-wider"
+                class="flex items-center gap-2 text-xs md:text-sm font-medium text-gray-700 hover:text-black transition-colors uppercase tracking-wider"
                 (click)="toggleDropdown('marca')"
               >
                 {{ selectedMarca() ? selectedMarca()!.nombre : 'MARCA' }}
@@ -115,7 +115,7 @@ import {
             <!-- Dropdown Corte -->
             <div class="relative group">
               <button
-                class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-black transition-colors uppercase tracking-wider"
+                class="flex items-center gap-2 text-xs md:text-sm font-medium text-gray-700 hover:text-black transition-colors uppercase tracking-wider"
                 (click)="toggleDropdown('corte')"
               >
                 {{ selectedCorte() ? selectedCorte()!.nombre : 'CORTE' }}
@@ -153,11 +153,11 @@ import {
             </div>
           </div>
 
-          <!-- Buscador y Botón (Derecha) -->
-          <div class="flex flex-col items-end gap-3">
+          <!-- Buscador y Botón (Abajo en mobile, Derecha en desktop) -->
+          <div class="flex flex-col md:items-end gap-3 w-full md:w-auto">
             <!-- Buscador -->
             <div
-              class="flex items-center gap-2 w-80 border-b border-gray-300 focus-within:border-black transition-colors pb-1"
+              class="flex items-center gap-2 w-full md:w-80 border-b border-gray-300 focus-within:border-black transition-colors pb-1"
             >
               <svg
                 class="w-4 h-4 text-gray-400"
@@ -175,7 +175,7 @@ import {
               <input
                 type="text"
                 placeholder="BUSCAR MODELO..."
-                class="w-full text-sm outline-none placeholder-gray-300 font-medium uppercase bg-transparent"
+                class="w-full text-xs md:text-sm outline-none placeholder-gray-300 font-medium uppercase bg-transparent"
                 [ngModel]="searchQuery()"
                 (ngModelChange)="searchQuery.set($event)"
               />
@@ -184,7 +184,7 @@ import {
             <!-- Botón Nuevo Diseño -->
             <button
               type="button"
-              class="px-6 py-2.5 bg-black text-white text-xs font-bold tracking-[0.2em] hover:bg-gray-800 transition-colors flex items-center gap-2"
+              class="w-full md:w-auto px-4 md:px-6 py-2.5 bg-black text-white text-xs font-bold tracking-[0.15em] md:tracking-[0.2em] hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
               (click)="onNewModelo()"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,7 +195,8 @@ import {
                   d="M12 4v16m8-8H4"
                 ></path>
               </svg>
-              NUEVO DISEÑO/MODELO
+              <span class="hidden sm:inline">NUEVO DISEÑO/MODELO</span>
+              <span class="sm:hidden">NUEVO</span>
             </button>
           </div>
         </div>
@@ -228,7 +229,7 @@ import {
           </button>
         </div>
         } @else {
-        <div class="grid grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           @for (modelo of filteredModelos(); track modelo.id) {
           <app-product-card-admin
             [modelo]="modelo"

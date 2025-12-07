@@ -25,16 +25,16 @@ import { take } from 'rxjs/operators';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-4"
       (click)="onCloseRequest()"
     >
       <div
-        class="relative w-full max-w-5xl bg-white shadow-2xl grid grid-cols-1 md:grid-cols-2"
+        class="relative w-full h-full md:h-auto md:max-w-5xl bg-white shadow-2xl grid grid-cols-1 md:grid-cols-2 overflow-y-auto md:overflow-hidden"
         (click)="$event.stopPropagation()"
       >
         <button
           type="button"
-          class="absolute top-4 right-4 text-gray-400 hover:text-black"
+          class="absolute top-3 right-3 md:top-4 md:right-4 text-gray-400 hover:text-black z-10 bg-white md:bg-transparent rounded-full w-8 h-8 md:w-auto md:h-auto flex items-center justify-center text-2xl md:text-3xl"
           (click)="onCloseRequest()"
         >
           <span class="sr-only">Cerrar</span>
@@ -60,9 +60,9 @@ import { take } from 'rxjs/operators';
         </div>
 
         <!-- Columna Derecha: Contenido -->
-        <div class="flex flex-col gap-8 p-8">
+        <div class="flex flex-col gap-4 md:gap-8 p-4 md:p-8 pb-20 md:pb-8">
           @if (loading()) {
-          <div class="flex flex-col gap-6">
+          <div class="flex flex-col gap-4 md:gap-6">
             <div class="h-6 w-40 bg-gray-200 animate-pulse"></div>
             <div class="h-10 w-24 bg-gray-200 animate-pulse"></div>
             <div class="space-y-4">
@@ -79,33 +79,33 @@ import { take } from 'rxjs/operators';
             </div>
           </div>
           } @else if (product()) {
-          <div class="flex flex-col gap-8">
-            <div class="md:hidden -mx-8 -mt-8">
+          <div class="flex flex-col gap-4 md:gap-8">
+            <!-- Imagen Mobile -->
+            <div class="md:hidden -mx-4 -mt-4">
               <img
                 [src]="primaryImage()"
                 [alt]="product()?.nombreModelo || 'Producto'"
-                class="h-64 w-full object-cover"
+                class="h-48 md:h-64 w-full object-cover"
                 onerror="this.onerror=null; this.src='/assets/images/placeholder-product.svg'"
               />
             </div>
 
-            <div class="space-y-3">
-              <p class="text-xs uppercase tracking-[0.3em] text-gray-400">
+            <!-- Info del Producto -->
+            <div class="space-y-2 md:space-y-3">
+              <p class="text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-gray-400">
                 {{ product()?.nombreMarca }} / {{ product()?.nombreCategoria }}
               </p>
-              <h2 class="font-serif text-3xl text-gray-900">{{ product()?.nombreModelo }}</h2>
-              
+              <h2 class="font-serif text-xl md:text-3xl text-gray-900">{{ product()?.nombreModelo }}</h2>
             </div>
 
-            
-
-            <div class="space-y-4">
-              <p class="text-xs font-semibold tracking-[0.2em] text-gray-500">COLOR</p>
-              <div class="flex items-center gap-4">
+            <!-- Selector de Color -->
+            <div class="space-y-3 md:space-y-4">
+              <p class="text-[10px] md:text-xs font-semibold tracking-[0.15em] md:tracking-[0.2em] text-gray-500">COLOR</p>
+              <div class="flex items-center gap-2 md:gap-4">
                 @for (color of product()?.colores ?? []; track color.nombreColor) {
                 <button
                   type="button"
-                  class="relative h-10 w-10 rounded-full border border-gray-200"
+                  class="relative h-9 w-9 md:h-10 md:w-10 rounded-full border border-gray-200"
                   [class.ring-2]="selectedColor()?.nombreColor === color.nombreColor"
                   [class.ring-black]="selectedColor()?.nombreColor === color.nombreColor"
                   [class.ring-offset-2]="selectedColor()?.nombreColor === color.nombreColor"
@@ -117,13 +117,15 @@ import { take } from 'rxjs/operators';
                 }
               </div>
             </div>
-            <div class="space-y-4">
-              <p class="text-xs font-semibold tracking-[0.2em] text-gray-500">TALLA</p>
-              <div class="flex flex-wrap gap-3">
+
+            <!-- Selector de Talla -->
+            <div class="space-y-3 md:space-y-4">
+              <p class="text-[10px] md:text-xs font-semibold tracking-[0.15em] md:tracking-[0.2em] text-gray-500">TALLA</p>
+              <div class="flex flex-wrap gap-2 md:gap-3">
                 @for (talla of availableSizes(); track talla.idVariante) {
                 <button
                   type="button"
-                  class="w-10 h-10 border text-sm font-medium transition-colors"
+                  class="w-9 h-9 md:w-10 md:h-10 border text-xs md:text-sm font-medium transition-colors"
                   [class.border-gray-900]="selectedSize()?.idVariante === talla.idVariante"
                   [class.bg-black]="selectedSize()?.idVariante === talla.idVariante"
                   [class.text-white]="selectedSize()?.idVariante === talla.idVariante"
@@ -137,7 +139,7 @@ import { take } from 'rxjs/operators';
               </div>
               @if (selectedSize()) {
               <div
-                class="flex items-center gap-2 text-xs"
+                class="flex items-center gap-2 text-[10px] md:text-xs"
                 [class.text-emerald-600]="currentStock() > 0"
                 [class.text-red-500]="currentStock() === 0"
               >
@@ -151,15 +153,16 @@ import { take } from 'rxjs/operators';
               }
             </div>
 
-            <div class="space-y-3">
-              <label class="text-xs font-semibold tracking-[0.2em] text-gray-500">PRECIO</label>
+            <!-- Input de Precio -->
+            <div class="space-y-2 md:space-y-3">
+              <label class="text-[10px] md:text-xs font-semibold tracking-[0.15em] md:tracking-[0.2em] text-gray-500">PRECIO</label>
               <div class="flex items-center gap-2 border-b border-gray-300 pb-2">
-                <span class="text-lg font-semibold text-gray-500">Bs.</span>
+                <span class="text-base md:text-lg font-semibold text-gray-500">Bs.</span>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
-                  class="w-full text-3xl font-semibold text-gray-900 outline-none"
+                  class="w-full text-xl md:text-3xl font-semibold text-gray-900 outline-none"
                   [ngModel]="priceInput()"
                   (ngModelChange)="onPriceInput($event)"
                   placeholder="0"
@@ -167,26 +170,28 @@ import { take } from 'rxjs/operators';
               </div>
             </div>
 
-            <div class="flex items-center justify-between gap-4 pt-6 border-t border-gray-200">
+            <!-- Botones de Acción -->
+            <div class="flex items-center justify-between gap-3 md:gap-4 pt-4 md:pt-6 border-t border-gray-200">
               <button
                 type="button"
-                class="text-sm font-medium tracking-[0.2em] text-gray-500 hover:text-black"
+                class="text-xs md:text-sm font-medium tracking-[0.15em] md:tracking-[0.2em] text-gray-500 hover:text-black px-3 py-2"
                 (click)="onCloseRequest()"
               >
                 CANCELAR
               </button>
               <button
                 type="button"
-                class="px-8 py-3 bg-black text-white text-sm font-semibold tracking-[0.2em] disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                class="px-4 md:px-8 py-2.5 md:py-3 bg-black text-white text-xs md:text-sm font-semibold tracking-[0.15em] md:tracking-[0.2em] disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
                 [disabled]="!canAddToCart()"
                 (click)="onAddToCart()"
               >
-                AGREGAR AL CARRITO
+                <span class="hidden sm:inline">AGREGAR AL CARRITO</span>
+                <span class="sm:hidden">AGREGAR</span>
               </button>
             </div>
           </div>
           } @else {
-          <div class="flex flex-col items-center justify-center h-full text-sm text-gray-500">
+          <div class="flex flex-col items-center justify-center h-full text-xs md:text-sm text-gray-500">
             Error al cargar el producto.
           </div>
           }

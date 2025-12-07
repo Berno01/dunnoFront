@@ -32,20 +32,20 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
   template: `
     <!-- Backdrop con blur -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 md:p-0"
       (click)="onBackdropClick($event)"
     >
       <!-- Modal Container -->
       <div
-        class="relative bg-white w-[90vw] h-[90vh] shadow-2xl flex"
+        class="relative bg-white w-full h-full md:w-[90vw] md:h-[90vh] shadow-2xl flex flex-col md:flex-row overflow-hidden"
         (click)="$event.stopPropagation()"
       >
         <!-- Botón Cerrar (X) -->
         <button
-          class="absolute top-6 right-6 text-gray-400 hover:text-black transition-colors z-10"
+          class="absolute top-3 right-3 md:top-6 md:right-6 text-gray-400 hover:text-black transition-colors z-10 bg-white rounded-full p-1 md:p-0"
           (click)="onClose()"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -56,11 +56,11 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
         </button>
 
         <!-- Columna Izquierda: Uploader de Foto -->
-        <div class="w-1/2 bg-gray-50 p-12 flex flex-col">
+        <div class="w-full md:w-1/2 bg-gray-50 p-6 md:p-12 flex flex-col order-1 md:order-1">
           <div class="flex-1 flex flex-col justify-center items-center">
             <!-- Área de Preview Grande -->
             @if (activeColorPreview()) {
-            <div class="w-full aspect-[3/4] bg-white border-2 border-gray-200 mb-6 overflow-hidden relative group">
+            <div class="w-48 md:w-64 aspect-[3/4] bg-white border-2 border-gray-200 mb-4 md:mb-6 overflow-hidden relative group">
               <img [src]="activeColorPreview()!" alt="Preview" class="w-full h-full object-cover" />
               
               <!-- Botón eliminar foto (aparece al hover) -->
@@ -83,7 +83,7 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
             } @else {
             <!-- Drag & Drop Area -->
             <div
-              class="w-full aspect-[3/4] border-2 border-dashed border-gray-300 flex flex-col items-center justify-center mb-6 cursor-pointer hover:border-black transition-colors relative"
+              class="w-48 md:w-64 aspect-[3/4] border-2 border-dashed border-gray-300 flex flex-col items-center justify-center mb-4 md:mb-6 cursor-pointer hover:border-black transition-colors relative"
               [class.border-black]="isDragging()"
               (click)="fileInput.click()"
               (dragover)="onDragOver($event)"
@@ -91,7 +91,7 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
               (drop)="onDrop($event)"
             >
               <svg
-                class="w-16 h-16 text-gray-300 mb-4"
+                class="w-12 h-12 md:w-16 md:h-16 text-gray-300 mb-3 md:mb-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -103,7 +103,7 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 ></path>
               </svg>
-              <p class="text-sm font-bold text-gray-400 mb-2 tracking-wider">
+              <p class="text-xs md:text-sm font-bold text-gray-400 mb-2 tracking-wider text-center px-2">
                 ARRASTRA PARA GUARDAR TU FOTO
               </p>
               <p class="text-xs text-gray-300">JPG, PNG, WEBP (MAX 10MB)</p>
@@ -129,10 +129,10 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
             />
 
             <!-- Miniaturas de Colores (Navegación entre fotos) -->
-            <div class="flex gap-3 flex-wrap justify-center">
+            <div class="flex gap-2 md:gap-3 flex-wrap justify-center">
               @for (colorDraft of formDraft().coloresDraft; track colorDraft.idColor) {
               <button
-                class="relative w-16 h-16 rounded border-2 transition-all duration-300 ease-out"
+                class="relative w-12 h-12 md:w-16 md:h-16 rounded border-2 transition-all duration-300 ease-out"
                 [class.border-black]="formDraft().activeColorIdForUpload === colorDraft.idColor"
                 [class.border-gray-200]="formDraft().activeColorIdForUpload !== colorDraft.idColor"
                 [class.scale-125]="formDraft().activeColorIdForUpload === colorDraft.idColor"
@@ -173,12 +173,12 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
         </div>
 
         <!-- Columna Derecha: Formulario -->
-        <div class="w-1/2 p-12 overflow-y-auto">
-          <h1 class="text-4xl font-serif mb-8" style="font-family: 'Playfair Display', serif">
+        <div class="w-full md:w-1/2 p-6 md:p-12 overflow-y-auto order-2 md:order-2">
+          <h1 class="text-2xl md:text-4xl font-serif mb-6 md:mb-8" style="font-family: 'Playfair Display', serif">
             {{ modeloId() !== null ? 'EDITAR MODELO' : 'NUEVO MODELO' }}
           </h1>
 
-          <form class="space-y-6">
+          <form class="space-y-4 md:space-y-6">
             <!-- Nombre del Modelo -->
             <div>
               <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">

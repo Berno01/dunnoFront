@@ -32,6 +32,7 @@ export class VentasStoreService {
   readonly tipoVenta = signal<'LOCAL' | 'ENVIO'>('LOCAL');
   readonly editingSaleId = signal<number | null>(null);
   readonly isLoading = signal<boolean>(false);
+  readonly processing = signal<boolean>(false); // Estado de procesamiento de venta
 
   // --- Estado Derivado (Computed Signals) ---
   readonly totalVenta = computed(() =>
@@ -395,15 +396,19 @@ export class VentasStoreService {
     const payload = this.ventaPayload();
     const editingId = this.editingSaleId();
 
+    this.processing.set(true);
+
     if (editingId) {
       // Modo edición
       this.ventasService.updateSale(editingId, payload).subscribe({
         next: () => {
+          this.processing.set(false);
           this.toastService.success(`Venta #${editingId} actualizada correctamente`, 4000);
           this.resetState();
           this.router.navigate(['/ventas']);
         },
         error: (err) => {
+          this.processing.set(false);
           console.error('Error al actualizar la venta:', err);
           this.toastService.error('Error al actualizar la venta. Intente nuevamente.', 4000);
         },
@@ -412,11 +417,13 @@ export class VentasStoreService {
       // Modo creación
       this.ventasService.createSale(payload).subscribe({
         next: (response) => {
+          this.processing.set(false);
           this.toastService.success(`Venta creada exitosamente. ${response.mensaje}`, 4000);
           this.resetState();
           this.router.navigate(['/ventas']);
         },
         error: (err) => {
+          this.processing.set(false);
           console.error('Error al crear la venta:', err);
           this.toastService.error('Error al crear la venta. Intente nuevamente.', 4000);
         },
