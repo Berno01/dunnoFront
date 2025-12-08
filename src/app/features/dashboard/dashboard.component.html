@@ -1,0 +1,433 @@
+<div class="min-h-screen bg-gray-50 pb-10">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p class="text-sm text-gray-500">Resumen de ventas y métricas de tu negocio</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Date Filter -->
+          <div class="relative">
+            <button
+              (click)="toggleDatePicker()"
+              class="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              <svg
+                class="w-4 h-4 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+              {{ dateLabel() }}
+              <svg
+                class="w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </button>
+
+            @if (showDatePicker()) {
+            <div
+              class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-100 p-4 z-50"
+            >
+              <div class="space-y-2 mb-4">
+                <button
+                  (click)="selectQuickRange('hoy')"
+                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700 font-medium"
+                >
+                  Hoy
+                </button>
+                <button
+                  (click)="selectQuickRange('7dias')"
+                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700 font-medium"
+                >
+                  Últimos 7 días
+                </button>
+                <button
+                  (click)="selectQuickRange('mes')"
+                  class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700 font-medium"
+                >
+                  Este Mes
+                </button>
+              </div>
+
+              <div class="border-t border-gray-100 pt-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-500 uppercase">Rango Personalizado</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs text-gray-500 mb-1">Desde</label>
+                    <input
+                      type="date"
+                      [ngModel]="customStartDate()"
+                      (ngModelChange)="customStartDate.set($event)"
+                      class="w-full text-xs border border-gray-300 rounded px-2 py-1"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-500 mb-1">Hasta</label>
+                    <input
+                      type="date"
+                      [ngModel]="customEndDate()"
+                      (ngModelChange)="customEndDate.set($event)"
+                      class="w-full text-xs border border-gray-300 rounded px-2 py-1"
+                    />
+                  </div>
+                </div>
+                <button
+                  (click)="applyCustomDate()"
+                  class="w-full bg-black text-white text-sm font-medium py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  Aplicar Rango
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+
+          <!-- Sucursal Filter (Admin Only) -->
+          @if (authService.getUser()?.rol === 'ADMIN') {
+          <div class="relative">
+            <select
+              [ngModel]="selectedSucursal()"
+              (ngModelChange)="onSucursalChange($event)"
+              class="appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-gray-500 text-sm font-medium cursor-pointer hover:bg-gray-50 transition-colors"
+            >
+              <option [ngValue]="null">Todas las Sucursales</option>
+              <option [ngValue]="1">Tarija</option>
+              <option [ngValue]="2">Cochabamba</option>
+              <option [ngValue]="3">Santa Cruz</option>
+            </select>
+            <div
+              class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
+            >
+              <svg
+                class="fill-current h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"
+                />
+              </svg>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    @if (isLoading()) {
+    <!-- Skeleton Loader -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
+      <div class="h-32 bg-gray-200 rounded-xl"></div>
+      <div class="h-32 bg-gray-200 rounded-xl"></div>
+      <div class="h-32 bg-gray-200 rounded-xl"></div>
+      <div class="h-32 bg-gray-200 rounded-xl"></div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
+      <div class="lg:col-span-2 h-96 bg-gray-200 rounded-xl"></div>
+      <div class="h-96 bg-gray-200 rounded-xl"></div>
+    </div>
+    } @else {
+
+    <!-- 1. KPIs Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Ventas -->
+      <div
+        class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+      >
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm font-medium text-gray-500">Ventas</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">
+              {{ kpis()?.cantidad_ventas || 0 }}
+            </h3>
+          </div>
+          <div class="p-2 bg-green-50 rounded-lg">
+            <svg
+              class="w-6 h-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400">Transacciones completadas</p>
+      </div>
+
+      <!-- Ingresos -->
+      <div
+        class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+      >
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm font-medium text-gray-500">Ingresos</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">
+              Bs {{ kpis()?.total_ventas || 0 }}
+            </h3>
+          </div>
+          <div class="p-2 bg-blue-50 rounded-lg">
+            <svg
+              class="w-6 h-6 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400">Total facturado</p>
+      </div>
+
+      <!-- Ticket Promedio -->
+      <div
+        class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+      >
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm font-medium text-gray-500">Ticket Promedio</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">
+              Bs {{ kpis()?.ticket_promedio || 0 | number : '1.2-2' }}
+            </h3>
+          </div>
+          <div class="p-2 bg-yellow-50 rounded-lg">
+            <svg
+              class="w-6 h-6 text-yellow-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400">Por venta realizada</p>
+      </div>
+
+      <!-- Unidades -->
+      <div
+        class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+      >
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm font-medium text-gray-500">Unidades</p>
+            <h3 class="text-3xl font-bold text-gray-900 mt-1">
+              {{ kpis()?.unidades_vendidas || 0 }}
+            </h3>
+          </div>
+          <div class="p-2 bg-purple-50 rounded-lg">
+            <svg
+              class="w-6 h-6 text-purple-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+              ></path>
+            </svg>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400">Productos vendidos</p>
+      </div>
+    </div>
+
+    <!-- 2. Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Ventas por Hora -->
+      <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="mb-6">
+          <h3 class="text-lg font-bold text-gray-900">Ventas por Hora</h3>
+          <p class="text-sm text-gray-500">Distribución de ventas durante el día</p>
+        </div>
+        <div id="chart-hours">
+          <apx-chart
+            [series]="salesByHourOptions.series"
+            [chart]="salesByHourOptions.chart"
+            [xaxis]="salesByHourOptions.xaxis"
+            [stroke]="salesByHourOptions.stroke"
+            [tooltip]="salesByHourOptions.tooltip"
+            [dataLabels]="salesByHourOptions.dataLabels"
+            [fill]="salesByHourOptions.fill"
+            [grid]="salesByHourOptions.grid"
+          ></apx-chart>
+        </div>
+      </div>
+
+      <!-- Ventas por Categoría -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div class="mb-6">
+          <h3 class="text-lg font-bold text-gray-900">Ventas por Categoría</h3>
+          <p class="text-sm text-gray-500">Total: {{ kpis()?.unidades_vendidas }} unidades</p>
+        </div>
+        <div id="chart-categories">
+          <apx-chart
+            [series]="salesByCategoryOptions.series"
+            [chart]="salesByCategoryOptions.chart"
+            [plotOptions]="salesByCategoryOptions.plotOptions"
+            [xaxis]="salesByCategoryOptions.xaxis"
+            [colors]="salesByCategoryOptions.colors"
+            [dataLabels]="salesByCategoryOptions.dataLabels"
+            [grid]="salesByCategoryOptions.grid"
+          ></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Details Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Métodos de Pago -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h3 class="text-lg font-bold text-gray-900 mb-1">Métodos de Pago</h3>
+        <p class="text-sm text-gray-500 mb-6">Distribución del periodo</p>
+
+        <div class="space-y-6">
+          @for (metodo of metodosPago(); track metodo.metodo) {
+          <div>
+            <div class="flex justify-between text-sm font-medium mb-1">
+              <span class="text-gray-700 flex items-center gap-2">
+                @if (metodo.metodo === 'EFECTIVO') {
+                <svg
+                  class="w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                  ></path>
+                </svg>
+                } @else if (metodo.metodo === 'QR') {
+                <svg
+                  class="w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                  ></path>
+                </svg>
+                } @else {
+                <svg
+                  class="w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                  ></path>
+                </svg>
+                }
+                {{ metodo.metodo }}
+              </span>
+              <span class="text-gray-900">{{ metodo.porcentaje }}%</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-2">
+              <div class="bg-black h-2 rounded-full" [style.width.%]="metodo.porcentaje"></div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Top Productos -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h3 class="text-lg font-bold text-gray-900 mb-1">Top Productos</h3>
+        <p class="text-sm text-gray-500 mb-6">Los 5 más vendidos</p>
+
+        <div class="space-y-4">
+          @for (prod of topProductos(); track prod.nombre_modelo; let i = $index) {
+          <div class="flex items-center gap-4">
+            <div
+              class="flex-shrink-0 w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold"
+            >
+              {{ i + 1 }}
+            </div>
+            <img [src]="prod.foto_url" alt="" class="w-10 h-10 rounded object-cover bg-gray-100" />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900 truncate">{{ prod.nombre_modelo }}</p>
+              <p class="text-xs text-gray-500 truncate">{{ prod.subtitulo }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-bold text-gray-900">{{ prod.cantidad_vendida }}</p>
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800"
+              >
+                Stock: {{ prod.stock_actual }}
+              </span>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Tallas -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <h3 class="text-lg font-bold text-gray-900 mb-1">Tallas más Vendidas</h3>
+        <p class="text-sm text-gray-500 mb-6">Distribución por talla</p>
+
+        <div class="grid grid-cols-3 gap-4">
+          @for (talla of distribucionTallas(); track talla.talla) {
+          <div class="flex flex-col items-center p-3 rounded-lg bg-gray-50">
+            <span class="text-lg font-bold text-gray-900">{{ talla.talla }}</span>
+            <span class="text-xs text-gray-500">{{ talla.cantidad }} un.</span>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+</div>
