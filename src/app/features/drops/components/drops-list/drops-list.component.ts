@@ -300,7 +300,7 @@ export class DropsListComponent {
   // Signals
   drops = signal<Drop[]>([]);
   loading = signal<boolean>(true);
-  selectedDate = signal<string | null>(null);
+  selectedDate = signal<string | null>(this.getTodayString());
   selectedBranch = signal<number | null>(null);
 
   // Computed
@@ -414,5 +414,13 @@ export class DropsListComponent {
 
   getTotalItems(drop: Drop): number {
     return drop.detalles?.reduce((sum, detalle) => sum + detalle.cantidad, 0) || 0;
+  }
+
+  private getTodayString(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }
