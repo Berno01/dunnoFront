@@ -43,11 +43,15 @@ export class LoginComponent {
         this.isLoading.set(false);
         const rol = this.sessionService.rol();
         console.log('Login exitoso. Rol detectado:', rol); // DEBUG
-        
+
         if (rol === 'ADMIN') {
-          this.router.navigate(['/dashboard']).then(success => console.log('Navegación a Dashboard:', success));
+          this.router
+            .navigate(['/dashboard'])
+            .then((success) => console.log('Navegación a Dashboard:', success));
         } else {
-          this.router.navigate(['/ventas']).then(success => console.log('Navegación a Ventas:', success));
+          this.router
+            .navigate(['/ventas'])
+            .then((success) => console.log('Navegación a Ventas:', success));
         }
       },
       error: (err: any) => {

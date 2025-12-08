@@ -46,7 +46,7 @@ export class AuthService {
           nombre_completo: response.nombre_completo,
           id_sucursal: idSucursal,
           nombre_sucursal: nombreSucursal,
-          token: response.token
+          token: response.token,
         };
 
         if (usuario.id_usuario) {
@@ -77,7 +77,7 @@ export class AuthService {
     const sucursales: { [key: number]: string } = {
       1: 'Tarija',
       2: 'Cochabamba',
-      3: 'Santa Cruz'
+      3: 'Santa Cruz',
     };
     return sucursales[id] || 'Sucursal Desconocida';
   }
@@ -104,11 +104,6 @@ export class AuthService {
     const nombreSucursal = usuario.nombre_sucursal || 'Tarija';
     const idSucursal = usuario.id_sucursal || 1;
 
-    this.sessionService.initSession(
-      usuario.id_usuario,
-      idSucursal,
-      nombreSucursal,
-      usuario.rol
-    );
+    this.sessionService.initSession(usuario.id_usuario, idSucursal, nombreSucursal, usuario.rol);
   }
 }
