@@ -125,9 +125,21 @@ import { take } from 'rxjs/operators';
             class="text-[10px] md:text-xs font-semibold tracking-[0.15em] md:tracking-[0.2em] text-gray-500"
             >SUCURSAL</label
           >
+          @if (isAdmin()) {
+          <select
+            class="w-full px-3 py-2 border border-black text-xs md:text-sm font-medium text-gray-900 outline-none focus:ring-2 focus:ring-black"
+            [ngModel]="sessionService.sucursalId()"
+            (ngModelChange)="onBranchChange($event)"
+          >
+            <option [value]="1">Tarija</option>
+            <option [value]="2">Cochabamba</option>
+            <option [value]="3">Santa Cruz</option>
+          </select>
+          } @else {
           <div class="px-3 py-2 border border-gray-300 text-xs md:text-sm bg-gray-50">
             {{ sessionService.sucursalNombre() }}
           </div>
+          }
         </div>
 
         <!-- Botón Guardar -->
@@ -162,6 +174,7 @@ export class DropSummaryComponent {
   itemCount = computed(() => this.dropsStore.itemCount());
   isEditMode = computed(() => this.dropsStore.isEditMode());
   editingDropId = computed(() => this.dropsStore.getEditingDropId());
+  isAdmin = computed(() => this.sessionService.rol() === 'ADMIN');
 
   resolveImageUrl(fotoUrl: string): string {
     if (!fotoUrl?.trim()) {
@@ -174,6 +187,16 @@ export class DropSummaryComponent {
 
     const sanitizedPath = fotoUrl.replace(/^\/+/, '');
     return `/assets/images/${sanitizedPath}`;
+  }
+
+  onBranchChange(id: string) {
+    const branchId = Number(id);
+    const branches: { [key: number]: string } = {
+      1: 'Tarija',
+      2: 'Cochabamba',
+      3: 'Santa Cruz',
+    };
+    this.sessionService.setSucursal(branchId, branches[branchId]);
   }
 
   incrementItem(idVariante: number): void {

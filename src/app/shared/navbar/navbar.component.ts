@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SessionService } from '../../core/services/session.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -46,7 +47,8 @@ import { SessionService } from '../../core/services/session.service';
 
         <!-- Navegación (Centro - Desktop) -->
         <div class="hidden md:flex items-center gap-2">
-          <!-- Dashboard -->
+          <!-- Dashboard (Solo Admin) -->
+          @if (isAdmin()) {
           <a
             routerLink="/dashboard"
             routerLinkActive="bg-black text-white"
@@ -63,8 +65,9 @@ import { SessionService } from '../../core/services/session.service';
             </svg>
             <span>DASHBOARD</span>
           </a>
+          }
 
-          <!-- Ventas -->
+          <!-- Ventas (Todos) -->
           <a
             routerLink="/ventas"
             routerLinkActive="bg-black text-white"
@@ -82,7 +85,8 @@ import { SessionService } from '../../core/services/session.service';
             <span>VENTAS</span>
           </a>
 
-          <!-- Catálogo -->
+          <!-- Catálogo (Solo Admin) -->
+          @if (isAdmin()) {
           <a
             routerLink="/catalogo"
             routerLinkActive="bg-black text-white"
@@ -99,8 +103,9 @@ import { SessionService } from '../../core/services/session.service';
             </svg>
             <span>CATÁLOGO</span>
           </a>
+          }
 
-          <!-- Drops -->
+          <!-- Drops (Todos) -->
           <a
             routerLink="/drops"
             routerLinkActive="bg-black text-white"
@@ -118,7 +123,8 @@ import { SessionService } from '../../core/services/session.service';
             <span>DROPS</span>
           </a>
 
-          <!-- Inventario -->
+          <!-- Inventario (Solo Admin) -->
+          @if (isAdmin()) {
           <a
             routerLink="/inventario"
             routerLinkActive="bg-black text-white"
@@ -135,13 +141,40 @@ import { SessionService } from '../../core/services/session.service';
             </svg>
             <span>INVENTARIO</span>
           </a>
+          }
+
+          <!-- Usuarios (Solo Admin) -->
+          @if (isAdmin()) {
+          <a
+            routerLink="/usuarios"
+            routerLinkActive="bg-black text-white"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-md font-medium text-sm transition-colors text-gray-700 hover:bg-gray-100"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
+            <span>USUARIOS</span>
+          </a>
+          }
         </div>
 
-        <!-- Info Sucursal (Derecha - Desktop) -->
-        <div class="hidden md:flex items-center">
+        <!-- Info Sucursal y Logout (Derecha - Desktop) -->
+        <div class="hidden md:flex items-center gap-4">
           <span class="text-sm font-medium text-gray-700">
             Sucursal: {{ sessionService.sucursalNombre() }}
           </span>
+          <button
+            (click)="logout()"
+            class="text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
+          >
+            SALIR
+          </button>
         </div>
       </div>
 
@@ -152,6 +185,7 @@ import { SessionService } from '../../core/services/session.service';
       >
         <div class="px-4 py-4 space-y-2">
           <!-- Dashboard -->
+          @if (isAdmin()) {
           <a
             routerLink="/dashboard"
             routerLinkActive="bg-black text-white"
@@ -169,6 +203,7 @@ import { SessionService } from '../../core/services/session.service';
             </svg>
             <span>DASHBOARD</span>
           </a>
+          }
 
           <!-- Ventas -->
           <a
@@ -190,6 +225,7 @@ import { SessionService } from '../../core/services/session.service';
           </a>
 
           <!-- Catálogo -->
+          @if (isAdmin()) {
           <a
             routerLink="/catalogo"
             routerLinkActive="bg-black text-white"
@@ -207,6 +243,7 @@ import { SessionService } from '../../core/services/session.service';
             </svg>
             <span>CATÁLOGO</span>
           </a>
+          }
 
           <!-- Drops -->
           <a
@@ -228,6 +265,7 @@ import { SessionService } from '../../core/services/session.service';
           </a>
 
           <!-- Inventario -->
+          @if (isAdmin()) {
           <a
             routerLink="/inventario"
             routerLinkActive="bg-black text-white"
@@ -245,12 +283,40 @@ import { SessionService } from '../../core/services/session.service';
             </svg>
             <span>INVENTARIO</span>
           </a>
+          }
 
-          <!-- Info Sucursal (Mobile) -->
-          <div class="pt-3 mt-3 border-t border-gray-200">
+          <!-- Usuarios -->
+          @if (isAdmin()) {
+          <a
+            routerLink="/usuarios"
+            routerLinkActive="bg-black text-white"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="flex items-center gap-3 px-4 py-3 rounded-md font-medium text-sm transition-colors text-gray-700 hover:bg-gray-100"
+            (click)="closeMenu()"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
+            <span>USUARIOS</span>
+          </a>
+          }
+
+          <!-- Info Sucursal y Logout (Mobile) -->
+          <div class="pt-3 mt-3 border-t border-gray-200 flex flex-col gap-2">
             <span class="text-sm font-medium text-gray-700 px-4">
               Sucursal: {{ sessionService.sucursalNombre() }}
             </span>
+            <button
+              (click)="logout()"
+              class="text-sm font-medium text-red-600 hover:text-red-800 transition-colors px-4 text-left"
+            >
+              SALIR
+            </button>
           </div>
         </div>
       </div>
@@ -267,6 +333,7 @@ import { SessionService } from '../../core/services/session.service';
 })
 export class NavbarComponent {
   sessionService = inject(SessionService);
+  authService = inject(AuthService);
   menuOpen = signal(false);
 
   toggleMenu() {
@@ -275,5 +342,13 @@ export class NavbarComponent {
 
   closeMenu() {
     this.menuOpen.set(false);
+  }
+
+  logout() {
+    this.authService.logout();
+  }
+
+  isAdmin() {
+    return this.sessionService.rol() === 'ADMIN';
   }
 }

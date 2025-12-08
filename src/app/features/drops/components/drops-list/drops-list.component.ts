@@ -307,6 +307,11 @@ export class DropsListComponent {
   isAdmin = computed(() => this.sessionService.rol() === 'ADMIN');
 
   constructor() {
+    // Inicializar sucursal según el rol
+    if (!this.isAdmin()) {
+      this.selectedBranch.set(this.sessionService.sucursalId());
+    }
+
     // Auto-cargar al iniciar
     effect(() => {
       if (isPlatformBrowser(this.platformId)) {

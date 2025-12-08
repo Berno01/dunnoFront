@@ -55,6 +55,12 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
           </svg>
         </button>
 
+        @if (loading()) {
+        <div class="w-full h-full flex flex-col items-center justify-center bg-white z-20">
+          <div class="h-12 w-12 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
+          <p class="text-gray-500 font-medium tracking-wider text-sm">CARGANDO MODELO...</p>
+        </div>
+        } @else {
         <!-- Columna Izquierda: Uploader de Foto -->
         <div class="w-full md:w-1/2 bg-gray-50 p-6 md:p-12 flex flex-col order-1 md:order-1">
           <div class="flex-1 flex flex-col justify-center items-center">
@@ -382,6 +388,7 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
             </button>
           </div>
         </div>
+        }
       </div>
     </div>
 
@@ -546,6 +553,7 @@ export class NuevoModeloModalComponent {
    * Carga un modelo existente para editarlo
    */
   loadModeloForEdit(id: number): void {
+    this.loading.set(true);
     this.catalogoService.getModeloById(id).subscribe({
       next: (modelo) => {
         console.log('📦 Modelo cargado:', modelo);
@@ -578,10 +586,12 @@ export class NuevoModeloModalComponent {
           coloresDraft: coloresDraft,
           activeColorIdForUpload: coloresDraft.length > 0 ? coloresDraft[0].idColor : null,
         });
+        this.loading.set(false);
       },
       error: (err) => {
         console.error('Error cargando modelo:', err);
         this.toastService.error('Error al cargar el modelo', 4000);
+        this.loading.set(false);
       },
     });
   }
@@ -600,6 +610,7 @@ export class NuevoModeloModalComponent {
   // Estado del drag & drop
   isDragging = signal<boolean>(false);
   saving = signal<boolean>(false);
+  loading = signal<boolean>(false);
 
   // Modal de confirmación para eliminar color con foto
   showConfirmDeleteModal = signal<boolean>(false);
@@ -636,7 +647,7 @@ export class NuevoModeloModalComponent {
       draft.idCategoria !== null &&
       draft.idCorte !== null &&
       draft.idsTallasSelected.length > 0 &&
-      draft.coloresDraft.filter((c) => c.isSelected && c.photoFile).length > 0
+      draft.coloresDraft.filter((c) => c.isSelected && (c.photoFile || c.previewUrl)).length > 0
     );
   });
 

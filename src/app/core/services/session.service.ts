@@ -29,4 +29,16 @@ export class SessionService {
     this.sucursalId.set(this.userOriginalSucursalId());
     this.sucursalNombre.set(this.userOriginalSucursalNombre());
   }
+
+  // Método para inicializar la sesión desde AuthService
+  initSession(userId: number, sucursalId: number, sucursalNombre: string, rol: string) {
+    this.userId.set(userId);
+    this.sucursalId.set(sucursalId);
+    this.sucursalNombre.set(sucursalNombre);
+    this.rol.set(rol);
+
+    // Establecer las originales también
+    this.userOriginalSucursalId.set(sucursalId);
+    this.userOriginalSucursalNombre.set(sucursalNombre);
+  }
 }
