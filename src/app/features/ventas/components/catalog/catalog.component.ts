@@ -261,6 +261,7 @@ const MOCK_PRODUCTS: ResumenPrendaDTO[] = [
     nombreCategoria: 'HOODIE',
     fotoPortada:
       'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=500',
+    precio: 250.0,
     stockTotal: 15,
     pocasUnidades: false,
   },
@@ -271,6 +272,7 @@ const MOCK_PRODUCTS: ResumenPrendaDTO[] = [
     nombreCategoria: 'POLERA',
     fotoPortada:
       'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=500',
+    precio: 120.0,
     stockTotal: 5,
     pocasUnidades: true,
   },
@@ -281,6 +283,7 @@ const MOCK_PRODUCTS: ResumenPrendaDTO[] = [
     nombreCategoria: 'PANTALÓN',
     fotoPortada:
       'https://images.unsplash.com/photo-1517438476312-10d79c077509?auto=format&fit=crop&q=80&w=500',
+    precio: 350.0,
     stockTotal: 0,
     pocasUnidades: false,
   },
@@ -291,6 +294,7 @@ const MOCK_PRODUCTS: ResumenPrendaDTO[] = [
     nombreCategoria: 'ACCESORIO',
     fotoPortada:
       'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&q=80&w=500',
+    precio: 80.0,
     stockTotal: 20,
     pocasUnidades: false,
   },
@@ -300,6 +304,7 @@ const MOCK_PRODUCTS: ResumenPrendaDTO[] = [
     nombreMarca: 'North Face',
     nombreCategoria: 'CHAQUETA',
     fotoPortada: '', // Test placeholder
+    precio: 450.0,
     stockTotal: 8,
     pocasUnidades: false,
   },

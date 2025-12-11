@@ -177,10 +177,11 @@ import { take } from 'rxjs/operators';
                   type="number"
                   min="0"
                   step="0.01"
-                  class="w-full text-xl md:text-3xl font-semibold text-gray-900 outline-none"
+                  class="w-full text-xl md:text-3xl font-semibold text-gray-900 outline-none bg-gray-50 cursor-not-allowed"
                   [ngModel]="priceInput()"
                   (ngModelChange)="onPriceInput($event)"
                   placeholder="0"
+                  readonly
                 />
               </div>
             </div>
@@ -335,6 +336,9 @@ export class ProductDetailModalComponent implements OnChanges {
           this.product.set(data);
           const initialColor = data.colores?.[0] ?? null;
           this.selectedColor.set(initialColor);
+          // Setear el precio automáticamente desde el backend
+          this.customPrice.set(data.precio || 0);
+          this.priceInput.set((data.precio || 0).toFixed(2));
           this.loading.set(false);
         },
         error: (err) => {

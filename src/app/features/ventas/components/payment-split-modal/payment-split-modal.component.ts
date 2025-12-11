@@ -58,7 +58,7 @@ import { FormsModule } from '@angular/forms';
             </div>
 
             <div class="text-sm text-gray-600 pt-2">
-              Restante en Efectivo: <span class="font-semibold">Bs. {{ remainingAmount() }}</span>
+              Total de la venta: <span class="font-semibold">Bs. {{ totalAmount.toFixed(2) }}</span>
             </div>
           </div>
 
@@ -92,20 +92,13 @@ export class PaymentSplitModalComponent {
 
   inputAmount = signal<string>('');
 
-  remainingAmount = computed(() => {
-    const amount = parseFloat(this.inputAmount());
-    if (isNaN(amount) || amount <= 0) {
-      return this.totalAmount;
-    }
-    return Math.max(0, this.totalAmount - amount);
-  });
-
   isValid = computed(() => {
     const amount = parseFloat(this.inputAmount());
     return !isNaN(amount) && amount > 0 && amount <= this.totalAmount;
   });
 
   ngOnInit() {
+    // Por defecto, mostrar el total de la venta
     this.inputAmount.set(this.totalAmount.toString());
   }
 

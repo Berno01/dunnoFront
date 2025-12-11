@@ -22,13 +22,23 @@ export class VentasStoreService {
   // --- Estado (Signals Writable) ---
   readonly cartItems = signal<CartItem[]>([]);
   readonly sucursalId = signal<number>(this.sessionService.sucursalId());
-  readonly paymentAmounts = signal<{ efectivo: number; qr: number; tarjeta: number }>({
+  readonly paymentAmounts = signal<{
+    efectivo: number;
+    qr: number;
+    tarjeta: number;
+    giftcard: number;
+  }>({
     efectivo: 0,
     qr: 0,
     tarjeta: 0,
+    giftcard: 0,
   });
   readonly splitActive = signal<boolean>(false);
-  readonly selectedPaymentMethod = signal<'EFECTIVO' | 'QR' | 'TARJETA' | ''>('EFECTIVO');
+  readonly selectedPaymentMethod = signal<'EFECTIVO' | 'QR' | 'TARJETA' | 'GIFTCARD' | ''>(
+    'EFECTIVO'
+  );
+  readonly descuento = signal<number>(0);
+  readonly tipoDescuento = signal<'SIN DESCUENTO' | 'PROMOCION' | 'DESCUENTO'>('SIN DESCUENTO');
   readonly tipoVenta = signal<'LOCAL' | 'ENVIO'>('LOCAL');
   readonly editingSaleId = signal<number | null>(null);
   readonly isLoading = signal<boolean>(false);
@@ -47,14 +57,20 @@ export class VentasStoreService {
     const total = this.totalVenta();
     const payments = this.paymentAmounts();
     const editingId = this.editingSaleId();
+    const descuentoValue = this.descuento();
+    const tipoDescuentoValue = this.tipoDescuento();
     // Siempre usar SessionService (que se actualiza tanto al crear como al editar)
     return {
       id_venta: editingId ?? undefined,
       id_sucursal: this.sessionService.sucursalId(),
-      total: total,
+      id_usuario: this.sessionService.userId(),
+      total: total - descuentoValue,
+      descuento: descuentoValue,
+      tipo_descuento: tipoDescuentoValue,
       monto_efectivo: payments.efectivo,
       monto_qr: payments.qr,
       monto_tarjeta: payments.tarjeta,
+      monto_giftcard: payments.giftcard,
       tipo_venta: this.tipoVenta(),
       detalle_venta: this.cartItems().map((item) => ({
         id_variante: item.idVariante,
@@ -158,6 +174,8 @@ export class VentasStoreService {
     this.cartItems.set([]);
     this.resetPayments();
     this.editingSaleId.set(null);
+    this.descuento.set(0);
+    this.tipoDescuento.set('SIN DESCUENTO');
   }
 
   resetState() {
@@ -167,53 +185,134 @@ export class VentasStoreService {
     this.tipoVenta.set('LOCAL');
     this.splitActive.set(false);
     this.selectedPaymentMethod.set('EFECTIVO');
+    this.descuento.set(0);
+    this.tipoDescuento.set('SIN DESCUENTO');
   }
 
-  setPayment(type: 'EFECTIVO' | 'QR' | 'TARJETA', amount?: number) {
-    const total = this.totalVenta();
+  setPayment(type: 'EFECTIVO' | 'QR' | 'TARJETA' | 'GIFTCARD', amount?: number) {
+    const total = this.totalVenta() - this.descuento();
+    const currentPayments = this.paymentAmounts();
+    const typeKey = type.toLowerCase() as 'efectivo' | 'qr' | 'tarjeta' | 'giftcard';
 
-    if (type === 'EFECTIVO') {
+    // Contar cuántos métodos ya están activos (excluyendo el actual si está siendo reseleccionado)
+    const activePayments = [
+      currentPayments.efectivo > 0 && typeKey !== 'efectivo' ? 'efectivo' : null,
+      currentPayments.qr > 0 && typeKey !== 'qr' ? 'qr' : null,
+      currentPayments.tarjeta > 0 && typeKey !== 'tarjeta' ? 'tarjeta' : null,
+      currentPayments.giftcard > 0 && typeKey !== 'giftcard' ? 'giftcard' : null,
+    ].filter((p) => p !== null);
+
+    // Si el tipo seleccionado ya está activo, resetear todo a ese método
+    if (currentPayments[typeKey] > 0) {
       this.paymentAmounts.set({
-        efectivo: total,
+        efectivo: 0,
         qr: 0,
         tarjeta: 0,
+        giftcard: 0,
+        [typeKey]: total,
       });
       this.splitActive.set(false);
       return;
     }
 
-    if (!amount || amount <= 0 || amount > total) {
-      console.warn('Monto inválido para pago mixto');
+    // Si ya hay 2 métodos activos, no permitir un tercero
+    if (activePayments.length >= 2) {
+      console.warn('Solo se permiten combinaciones de hasta 2 métodos de pago');
       return;
     }
 
-    const remaining = total - amount;
-
-    if (type === 'QR') {
+    // Si no hay monto especificado o es el total completo, usar un solo método
+    if (!amount || amount <= 0 || amount >= total) {
       this.paymentAmounts.set({
-        efectivo: remaining,
-        qr: amount,
-        tarjeta: 0,
-      });
-    } else if (type === 'TARJETA') {
-      this.paymentAmounts.set({
-        efectivo: remaining,
+        efectivo: 0,
         qr: 0,
-        tarjeta: amount,
+        tarjeta: 0,
+        giftcard: 0,
+        [typeKey]: total,
       });
+      this.splitActive.set(false);
+      return;
+    }
+
+    // Validar que el monto no exceda el total (ya cubierto arriba)
+    if (amount > total) {
+      console.warn('El monto no puede exceder el total');
+      return;
+    }
+
+    // Si no hay ningún método activo todavía (es el primer método que se está seleccionando)
+    // resetear todo primero antes de asignar
+    if (activePayments.length === 0) {
+      this.paymentAmounts.set({
+        efectivo: 0,
+        qr: 0,
+        tarjeta: 0,
+        giftcard: 0,
+        [typeKey]: amount,
+      });
+    } else {
+      // Ya hay un método activo, agregar este como segundo
+      const newPayments: { efectivo: number; qr: number; tarjeta: number; giftcard: number } = {
+        ...currentPayments,
+        [typeKey]: amount,
+      };
+      this.paymentAmounts.set(newPayments);
     }
 
     this.splitActive.set(true);
   }
 
+  // Nuevo método para establecer el monto restante en un método específico
+  setRemainingPayment(type: 'EFECTIVO' | 'QR' | 'TARJETA' | 'GIFTCARD') {
+    const total = this.totalVenta() - this.descuento();
+    const currentPayments = this.paymentAmounts();
+    const currentTotal =
+      currentPayments.efectivo +
+      currentPayments.qr +
+      currentPayments.tarjeta +
+      currentPayments.giftcard;
+    const remaining = total - currentTotal;
+
+    if (remaining <= 0) {
+      console.warn('No hay monto restante para asignar');
+      return;
+    }
+
+    const typeKey = type.toLowerCase() as 'efectivo' | 'qr' | 'tarjeta' | 'giftcard';
+
+    // Establecer directamente el restante (no sumar)
+    this.paymentAmounts.update((payments) => ({
+      ...payments,
+      [typeKey]: remaining,
+    }));
+    this.splitActive.set(true);
+  }
+
   resetPayments() {
-    const total = this.totalVenta();
+    const total = this.totalVenta() - this.descuento();
     this.paymentAmounts.set({
       efectivo: total,
       qr: 0,
       tarjeta: 0,
+      giftcard: 0,
     });
     this.splitActive.set(false);
+  }
+
+  setDescuento(descuento: number, tipo: 'PROMOCION' | 'DESCUENTO' = 'DESCUENTO') {
+    if (descuento < 0) {
+      console.warn('El descuento no puede ser negativo');
+      return;
+    }
+    const total = this.totalVenta();
+    if (descuento > total) {
+      console.warn('El descuento no puede ser mayor al total');
+      return;
+    }
+    this.descuento.set(descuento);
+    this.tipoDescuento.set(descuento === 0 ? 'SIN DESCUENTO' : tipo);
+    // Recalcular pagos con el nuevo total
+    this.resetPayments();
   }
 
   setTipoVenta(tipo: 'LOCAL' | 'ENVIO') {
@@ -249,25 +348,33 @@ export class VentasStoreService {
         this.sessionService.setSucursal(venta.id_sucursal, sucursalNombre);
 
         this.tipoVenta.set(venta.tipo_venta as 'LOCAL' | 'ENVIO');
+        this.descuento.set(venta.descuento ?? 0);
+        this.tipoDescuento.set(venta.tipo_descuento ?? 'SIN DESCUENTO');
         this.paymentAmounts.set({
           efectivo: venta.monto_efectivo,
           qr: venta.monto_qr,
           tarjeta: venta.monto_tarjeta,
+          giftcard: venta.monto_giftcard,
         });
 
         // Detectar si hay split activo y establecer método de pago
-        const hasSplit = venta.monto_qr > 0 || venta.monto_tarjeta > 0;
+        const activeMethods = [
+          venta.monto_efectivo > 0 ? 'EFECTIVO' : null,
+          venta.monto_qr > 0 ? 'QR' : null,
+          venta.monto_tarjeta > 0 ? 'TARJETA' : null,
+          venta.monto_giftcard > 0 ? 'GIFTCARD' : null,
+        ].filter((m) => m !== null);
+
+        const hasSplit = activeMethods.length > 1;
         this.splitActive.set(hasSplit);
 
-        if (hasSplit) {
-          // Determinar cuál es el método secundario (QR o Tarjeta)
-          if (venta.monto_qr > 0) {
-            this.selectedPaymentMethod.set('QR');
-          } else if (venta.monto_tarjeta > 0) {
-            this.selectedPaymentMethod.set('TARJETA');
-          }
+        if (hasSplit && activeMethods.length > 0) {
+          // Establecer el primer método activo como el método principal
+          this.selectedPaymentMethod.set(activeMethods[0] as any);
+        } else if (activeMethods.length === 1) {
+          // Pago simple
+          this.selectedPaymentMethod.set(activeMethods[0] as any);
         } else {
-          // Pago simple en efectivo
           this.selectedPaymentMethod.set('EFECTIVO');
         }
 

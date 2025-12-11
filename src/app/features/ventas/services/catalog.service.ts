@@ -40,6 +40,7 @@ export class CatalogService {
       nombreMarca: item.nombreMarca ?? item.nombre_marca ?? '',
       nombreCategoria: item.nombreCategoria ?? item.nombre_categoria ?? '',
       fotoPortada: item.fotoPortada ?? item.foto_portada ?? '',
+      precio: item.precio ?? 0,
       stockTotal: item.stockTotal ?? item.stock_total ?? 0,
       pocasUnidades: item.pocasUnidades ?? item.pocas_unidades ?? false,
     };
@@ -52,6 +53,7 @@ export class CatalogService {
       nombreMarca: item.nombreMarca ?? item.nombre_marca ?? '',
       nombreCategoria: item.nombreCategoria ?? item.nombre_categoria ?? '',
       nombreCorte: item.nombreCorte ?? item.nombre_corte ?? '',
+      precio: item.precio ?? 0,
       stockTotalSucursal: item.stockTotalSucursal ?? item.stock_total_sucursal ?? 0,
       colores: (item.colores ?? []).map((color) => this.mapToColor(color)),
     };
@@ -86,6 +88,7 @@ type ApiResumenPrendaDTO = {
   nombre_categoria?: string;
   fotoPortada?: string;
   foto_portada?: string;
+  precio?: number;
   stockTotal?: number;
   stock_total?: number;
   pocasUnidades?: boolean;
@@ -103,6 +106,7 @@ type ApiDetallePrendaDTO = {
   nombre_categoria?: string;
   nombreCorte?: string;
   nombre_corte?: string;
+  precio?: number;
   stockTotalSucursal?: number;
   stock_total_sucursal?: number;
   colores?: ApiColorDTO[];

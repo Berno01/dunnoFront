@@ -94,6 +94,11 @@ import { ModeloDTO } from '../../models/catalogo-admin.models';
           </div>
         </div>
         }
+
+        <!-- Precio -->
+        <div class="pt-2 border-t border-gray-100 mt-2">
+          <p class="text-lg font-bold text-gray-900">Bs. {{ modelo().precio.toFixed(2) }}</p>
+        </div>
       </div>
     </div>
   `,

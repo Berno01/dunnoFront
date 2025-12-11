@@ -11,6 +11,7 @@ export interface ColorDraftDTO {
 
 export interface CreateModeloPayloadDTO {
   nombreModelo: string;
+  precio: number;
   idMarca: number;
   idCategoria: number;
   idCorte: number;
@@ -23,6 +24,7 @@ export interface CreateModeloPayloadDTO {
 
 export interface FormDraftState {
   nombreModelo: string;
+  precio: number;
   idMarca: number | null;
   idCategoria: number | null;
   idCorte: number | null;

@@ -9,10 +9,15 @@ export interface DetalleVentaDTO {
 export interface VentaDTO {
   id_venta?: number; // para creación mandamos su valor en null
   id_sucursal: number;
+  id_usuario?: number; // ID del usuario que realiza la venta
+  username?: string; // Nombre del usuario que realiza la venta (viene del back)
   total: number; // calculado
+  descuento: number; // Descuento opcional aplicado a la venta
+  tipo_descuento: 'SIN DESCUENTO' | 'PROMOCION' | 'DESCUENTO'; // Tipo de descuento aplicado
   monto_efectivo: number;
   monto_qr: number;
   monto_tarjeta: number;
+  monto_giftcard: number; // Nuevo método de pago
   tipo_venta: string; // 'LOCAL' | 'ENVIO'
   fecha_venta?: string; // Viene del back
   estado_venta?: boolean; // Viene del back (true=activa, false=anulada)

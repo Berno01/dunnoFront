@@ -8,16 +8,18 @@ import {
   effect,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { VentasStoreService } from '../../../../core/services/ventas-store.service';
 import { VentasService } from '../../../../core/services/ventas.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { PaymentSplitModalComponent } from '../payment-split-modal/payment-split-modal.component';
+import { DescuentoModalComponent } from '../descuento-modal/descuento-modal.component';
 import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-cart-summary',
   standalone: true,
-  imports: [CommonModule, PaymentSplitModalComponent],
+  imports: [CommonModule, FormsModule, PaymentSplitModalComponent, DescuentoModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="h-full flex flex-col bg-gray-50">
@@ -122,45 +124,38 @@ import { take } from 'rxjs/operators';
           <span class="font-semibold text-gray-900">Bs. {{ total().toFixed(2) }}</span>
         </div>
 
-        <!-- Descuento (siempre 0 por ahora) -->
+        <!-- Descuento -->
         <div class="flex items-center justify-between text-xs md:text-sm">
-          <span class="text-gray-600">Descuento</span>
-          <span class="text-gray-900">- Bs. 0</span>
+          <button
+            type="button"
+            class="text-gray-600 hover:text-black underline"
+            (click)="onOpenDescuentoModal()"
+          >
+            {{ descuento() > 0 ? 'Modificar Descuento' : '+ Agregar Descuento' }}
+          </button>
+          <span class="text-gray-900 font-semibold">- Bs. {{ descuento().toFixed(2) }}</span>
         </div>
 
         <!-- Total -->
         <div class="flex items-center justify-between pt-2 border-t border-gray-200">
           <span class="text-xs md:text-sm font-bold tracking-wider text-gray-900">Total</span>
           <span class="text-lg md:text-xl font-bold text-gray-900"
-            >Bs. {{ total().toFixed(2) }}</span
+            >Bs. {{ totalConDescuento().toFixed(2) }}</span
           >
         </div>
 
         <!-- Payment Method Buttons -->
         <div class="pt-3 md:pt-4 space-y-2 md:space-y-3">
-          <div class="grid grid-cols-3 gap-1.5 md:gap-2">
+          <div class="grid grid-cols-2 gap-1.5 md:gap-2">
             <button
               type="button"
-              class="px-2 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wider transition-colors"
-              [class.bg-black]="!splitActive() || paymentAmounts().qr > 0"
-              [class.text-white]="!splitActive() || paymentAmounts().qr > 0"
-              [class.border-black]="!splitActive() || paymentAmounts().qr > 0"
-              [class.bg-white]="splitActive() && paymentAmounts().qr === 0"
-              [class.text-gray-600]="splitActive() && paymentAmounts().qr === 0"
-              [class.border-gray-300]="splitActive() && paymentAmounts().qr === 0"
-              (click)="onSelectPayment('QR')"
-            >
-              QR
-            </button>
-            <button
-              type="button"
-              class="px-1.5 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wide md:tracking-wider transition-colors"
-              [class.bg-black]="!splitActive() && paymentAmounts().efectivo === total()"
-              [class.text-white]="!splitActive() && paymentAmounts().efectivo === total()"
-              [class.border-black]="!splitActive() && paymentAmounts().efectivo === total()"
-              [class.bg-white]="splitActive() || paymentAmounts().efectivo !== total()"
-              [class.text-gray-600]="splitActive() || paymentAmounts().efectivo !== total()"
-              [class.border-gray-300]="splitActive() || paymentAmounts().efectivo !== total()"
+              class="px-2 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wide md:tracking-wider transition-colors"
+              [class.bg-black]="paymentAmounts().efectivo > 0"
+              [class.text-white]="paymentAmounts().efectivo > 0"
+              [class.border-black]="paymentAmounts().efectivo > 0"
+              [class.bg-white]="paymentAmounts().efectivo === 0"
+              [class.text-gray-600]="paymentAmounts().efectivo === 0"
+              [class.border-gray-300]="paymentAmounts().efectivo === 0"
               (click)="onSelectPayment('EFECTIVO')"
             >
               EFECTIVO
@@ -168,30 +163,79 @@ import { take } from 'rxjs/operators';
             <button
               type="button"
               class="px-2 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wider transition-colors"
-              [class.bg-black]="!splitActive() || paymentAmounts().tarjeta > 0"
-              [class.text-white]="!splitActive() || paymentAmounts().tarjeta > 0"
-              [class.border-black]="!splitActive() || paymentAmounts().tarjeta > 0"
-              [class.bg-white]="splitActive() && paymentAmounts().tarjeta === 0"
-              [class.text-gray-600]="splitActive() && paymentAmounts().tarjeta === 0"
-              [class.border-gray-300]="splitActive() && paymentAmounts().tarjeta === 0"
+              [class.bg-black]="paymentAmounts().qr > 0"
+              [class.text-white]="paymentAmounts().qr > 0"
+              [class.border-black]="paymentAmounts().qr > 0"
+              [class.bg-white]="paymentAmounts().qr === 0"
+              [class.text-gray-600]="paymentAmounts().qr === 0"
+              [class.border-gray-300]="paymentAmounts().qr === 0"
+              (click)="onSelectPayment('QR')"
+            >
+              QR
+            </button>
+            <button
+              type="button"
+              class="px-2 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wider transition-colors"
+              [class.bg-black]="paymentAmounts().tarjeta > 0"
+              [class.text-white]="paymentAmounts().tarjeta > 0"
+              [class.border-black]="paymentAmounts().tarjeta > 0"
+              [class.bg-white]="paymentAmounts().tarjeta === 0"
+              [class.text-gray-600]="paymentAmounts().tarjeta === 0"
+              [class.border-gray-300]="paymentAmounts().tarjeta === 0"
               (click)="onSelectPayment('TARJETA')"
             >
               TARJETA
+            </button>
+            <button
+              type="button"
+              class="px-2 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wider transition-colors"
+              [class.bg-black]="paymentAmounts().giftcard > 0"
+              [class.text-white]="paymentAmounts().giftcard > 0"
+              [class.border-black]="paymentAmounts().giftcard > 0"
+              [class.bg-white]="paymentAmounts().giftcard === 0"
+              [class.text-gray-600]="paymentAmounts().giftcard === 0"
+              [class.border-gray-300]="paymentAmounts().giftcard === 0"
+              (click)="onSelectPayment('GIFTCARD')"
+            >
+              GIFTCARD
             </button>
           </div>
 
           <!-- Payment Split Info -->
           @if (splitActive()) {
-          <div class="text-[10px] md:text-xs text-gray-600 text-center pt-1">
-            @if (paymentAmounts().qr > 0) { Cobrando
-            <span class="font-semibold">Bs. {{ paymentAmounts().qr.toFixed(2) }}</span> en QR y
-            <span class="font-semibold">Bs. {{ paymentAmounts().efectivo.toFixed(2) }}</span> en
-            Efectivo } @if (paymentAmounts().tarjeta > 0) { Cobrando
-            <span class="font-semibold">Bs. {{ paymentAmounts().tarjeta.toFixed(2) }}</span> en
-            TARJETA y
-            <span class="font-semibold">Bs. {{ paymentAmounts().efectivo.toFixed(2) }}</span> en
-            Efectivo }
+          <div class="text-[10px] md:text-xs text-gray-600 text-center pt-1 space-y-1">
+            @if (paymentAmounts().efectivo > 0) {
+            <div>
+              Efectivo:
+              <span class="font-semibold">Bs. {{ paymentAmounts().efectivo.toFixed(2) }}</span>
+            </div>
+            } @if (paymentAmounts().qr > 0) {
+            <div>
+              QR: <span class="font-semibold">Bs. {{ paymentAmounts().qr.toFixed(2) }}</span>
+            </div>
+            } @if (paymentAmounts().tarjeta > 0) {
+            <div>
+              Tarjeta:
+              <span class="font-semibold">Bs. {{ paymentAmounts().tarjeta.toFixed(2) }}</span>
+            </div>
+            } @if (paymentAmounts().giftcard > 0) {
+            <div>
+              Giftcard:
+              <span class="font-semibold">Bs. {{ paymentAmounts().giftcard.toFixed(2) }}</span>
+            </div>
+            }
           </div>
+          }
+
+          <!-- Botón para resetear pagos -->
+          @if (splitActive()) {
+          <button
+            type="button"
+            class="w-full text-[10px] md:text-xs text-gray-500 hover:text-black underline"
+            (click)="ventasStore.resetPayments()"
+          >
+            Resetear métodos de pago
+          </button>
           }
         </div>
 
@@ -291,16 +335,85 @@ import { take } from 'rxjs/operators';
 
     @if (showPaymentModal()) {
     <app-payment-split-modal
-      [totalAmount]="total()"
+      [totalAmount]="totalConDescuento()"
       [paymentMethod]="selectedPaymentMethod()"
       (confirmed)="onPaymentConfirmed($event)"
       (cancelled)="onPaymentCancelled()"
     ></app-payment-split-modal>
+    } @if (showDescuentoModal()) {
+    <app-descuento-modal
+      [maxDescuento]="total()"
+      [descuentoInicial]="descuento()"
+      [tipoInicial]="tipoDescuentoParaModal()"
+      (confirmed)="onDescuentoConfirmed($event)"
+      (cancelled)="onDescuentoCancelled()"
+    ></app-descuento-modal>
+    } @if (showSecondPaymentModal()) {
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      (click)="onSecondPaymentCancelled()"
+    >
+      <div
+        class="relative w-full max-w-md bg-white shadow-2xl p-8"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl"
+          (click)="onSecondPaymentCancelled()"
+        >
+          ×
+        </button>
+
+        <div class="flex flex-col gap-6">
+          <div class="space-y-2">
+            <h3 class="text-xl font-semibold text-gray-900">Seleccionar segundo método de pago</h3>
+            <p class="text-sm text-gray-500">Seleccione el método para completar el pago</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            @if (firstPaymentMethod() !== 'EFECTIVO') {
+            <button
+              type="button"
+              class="px-4 py-3 border border-gray-300 text-sm font-semibold tracking-wider hover:bg-black hover:text-white hover:border-black transition-colors"
+              (click)="onSecondPaymentMethodSelected('EFECTIVO')"
+            >
+              EFECTIVO
+            </button>
+            } @if (firstPaymentMethod() !== 'QR') {
+            <button
+              type="button"
+              class="px-4 py-3 border border-gray-300 text-sm font-semibold tracking-wider hover:bg-black hover:text-white hover:border-black transition-colors"
+              (click)="onSecondPaymentMethodSelected('QR')"
+            >
+              QR
+            </button>
+            } @if (firstPaymentMethod() !== 'TARJETA') {
+            <button
+              type="button"
+              class="px-4 py-3 border border-gray-300 text-sm font-semibold tracking-wider hover:bg-black hover:text-white hover:border-black transition-colors"
+              (click)="onSecondPaymentMethodSelected('TARJETA')"
+            >
+              TARJETA
+            </button>
+            } @if (firstPaymentMethod() !== 'GIFTCARD') {
+            <button
+              type="button"
+              class="px-4 py-3 border border-gray-300 text-sm font-semibold tracking-wider hover:bg-black hover:text-white hover:border-black transition-colors"
+              (click)="onSecondPaymentMethodSelected('GIFTCARD')"
+            >
+              GIFTCARD
+            </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
     }
   `,
 })
 export class CartSummaryComponent {
-  private ventasStore = inject(VentasStoreService);
+  ventasStore = inject(VentasStoreService);
   private ventasService = inject(VentasService);
   private platformId = inject(PLATFORM_ID);
 
@@ -312,26 +425,105 @@ export class CartSummaryComponent {
   selectedPaymentMethod = this.ventasStore.selectedPaymentMethod;
   tipoVenta = this.ventasStore.tipoVenta;
   processing = this.ventasStore.processing; // Usar el signal del store
+  descuento = this.ventasStore.descuento;
 
   showPaymentModal = signal<boolean>(false);
+  showDescuentoModal = signal<boolean>(false);
+  showSecondPaymentModal = signal<boolean>(false);
+  firstPaymentMethod = signal<'EFECTIVO' | 'QR' | 'TARJETA' | 'GIFTCARD' | ''>('');
+  firstPaymentAmount = signal<number>(0);
+
+  // Computed para el total después de descuento
+  totalConDescuento = computed(() => {
+    return Math.max(0, this.total() - this.descuento());
+  });
+
+  // Computed para verificar si el pago está completo
+  pagoCompleto = computed(() => {
+    const payments = this.paymentAmounts();
+    const totalPagado = payments.efectivo + payments.qr + payments.tarjeta + payments.giftcard;
+    return totalPagado === this.totalConDescuento();
+  });
+
+  // Computed para contar métodos activos
+  cantidadMetodosActivos = computed(() => {
+    const payments = this.paymentAmounts();
+    return [
+      payments.efectivo > 0 ? 1 : 0,
+      payments.qr > 0 ? 1 : 0,
+      payments.tarjeta > 0 ? 1 : 0,
+      payments.giftcard > 0 ? 1 : 0,
+    ].reduce((a, b) => a + b, 0);
+  });
+
+  // Computed para obtener el tipo de descuento válido para el modal
+  tipoDescuentoParaModal = computed((): 'DESCUENTO' | 'PROMOCION' => {
+    const tipo = this.ventasStore.tipoDescuento();
+    return tipo === 'SIN DESCUENTO' ? 'DESCUENTO' : tipo;
+  });
+
+  private previousTotal = signal<number>(0);
+  private previousDescuento = signal<number>(0);
+  private hasInitialized = signal<boolean>(false);
 
   constructor() {
+    // Resetear pagos cuando cambia el total del carrito o el descuento
     effect(() => {
       const total = this.total();
-      const isEditing = this.ventasStore.editingSaleId() !== null;
+      const descuento = this.descuento();
+      const prevTotal = this.previousTotal();
+      const prevDescuento = this.previousDescuento();
+      const isLoading = this.ventasStore.isLoading();
 
-      // Solo resetear pagos si NO estamos en modo edición
-      // (en modo edición, los pagos ya vienen cargados de la venta)
-      if (total > 0 && !isEditing) {
-        this.ventasStore.resetPayments();
+      // Mientras está cargando, solo actualizar los valores sin hacer nada más
+      if (isLoading) {
+        this.previousTotal.set(total);
+        this.previousDescuento.set(descuento);
+        return;
+      }
+
+      // Si ya terminó de cargar y aún no hemos inicializado
+      if (!this.hasInitialized()) {
+        this.previousTotal.set(total);
+        this.previousDescuento.set(descuento);
+        this.hasInitialized.set(true);
+
+        // Si hay total y no hay pagos asignados, inicializar
+        const payments = this.paymentAmounts();
+        const totalPagado = payments.efectivo + payments.qr + payments.tarjeta + payments.giftcard;
+        // No inicializar si hay modales abiertos (usuario está configurando pagos)
+        if (
+          total > 0 &&
+          totalPagado === 0 &&
+          !this.showPaymentModal() &&
+          !this.showSecondPaymentModal()
+        ) {
+          this.ventasStore.resetPayments();
+        }
+        return;
+      }
+
+      // Si el total o el descuento cambiaron, resetear pagos
+      if (total !== prevTotal || descuento !== prevDescuento) {
+        if (total > 0) {
+          this.ventasStore.resetPayments();
+        }
+        this.previousTotal.set(total);
+        this.previousDescuento.set(descuento);
       }
     });
   }
 
-  onSelectPayment(method: 'EFECTIVO' | 'QR' | 'TARJETA') {
-    if (method === 'EFECTIVO') {
-      this.ventasStore.setPayment('EFECTIVO');
-      this.selectedPaymentMethod.set('EFECTIVO');
+  onSelectPayment(method: 'EFECTIVO' | 'QR' | 'TARJETA' | 'GIFTCARD') {
+    const currentPayments = this.paymentAmounts();
+    const activeCount = this.cantidadMetodosActivos();
+
+    // Si ya hay 2 métodos activos y este no es uno de ellos, mostrar advertencia
+    const methodKey = method.toLowerCase() as 'efectivo' | 'qr' | 'tarjeta' | 'giftcard';
+    if (activeCount >= 2 && currentPayments[methodKey] === 0) {
+      inject(ToastService).warning(
+        'Solo se permiten 2 métodos de pago. Resetea los pagos primero.'
+      );
       return;
     }
 
@@ -339,15 +531,83 @@ export class CartSummaryComponent {
     this.showPaymentModal.set(true);
   }
 
+  onOpenDescuentoModal() {
+    this.showDescuentoModal.set(true);
+  }
+
+  onDescuentoConfirmed(data: { monto: number; tipo: 'DESCUENTO' | 'PROMOCION' }) {
+    this.ventasStore.setDescuento(data.monto, data.tipo);
+    this.showDescuentoModal.set(false);
+  }
+
+  onDescuentoCancelled() {
+    this.showDescuentoModal.set(false);
+  }
+
   onPaymentConfirmed(amount: number) {
-    const method = this.selectedPaymentMethod() as 'QR' | 'TARJETA';
-    this.ventasStore.setPayment(method, amount);
-    this.showPaymentModal.set(false);
+    const method = this.selectedPaymentMethod() as 'EFECTIVO' | 'QR' | 'TARJETA' | 'GIFTCARD';
+    const total = this.totalConDescuento();
+
+    // Si el monto es igual al total, pago completo con un solo método
+    if (amount === total) {
+      this.ventasStore.setPayment(method, amount);
+      this.showPaymentModal.set(false);
+      return;
+    }
+
+    // Si el monto es menor, guardar temporalmente y pedir el segundo método
+    if (amount < total) {
+      this.firstPaymentMethod.set(method);
+      this.firstPaymentAmount.set(amount);
+      this.showPaymentModal.set(false);
+      // Mostrar modal para elegir el segundo método
+      this.showSecondPaymentModal.set(true);
+    }
+  }
+
+  onSecondPaymentMethodSelected(method: 'EFECTIVO' | 'QR' | 'TARJETA' | 'GIFTCARD') {
+    const total = this.totalConDescuento();
+    const firstMethod = this.firstPaymentMethod();
+    const firstAmount = this.firstPaymentAmount();
+    const secondAmount = total - firstAmount;
+
+    if (firstMethod && firstAmount > 0 && secondAmount > 0) {
+      // Resetear todo primero
+      this.ventasStore.paymentAmounts.set({
+        efectivo: 0,
+        qr: 0,
+        tarjeta: 0,
+        giftcard: 0,
+      });
+
+      // Aplicar ambos pagos
+      const firstKey = firstMethod.toLowerCase() as 'efectivo' | 'qr' | 'tarjeta' | 'giftcard';
+      const secondKey = method.toLowerCase() as 'efectivo' | 'qr' | 'tarjeta' | 'giftcard';
+
+      this.ventasStore.paymentAmounts.update((payments) => ({
+        ...payments,
+        [firstKey]: firstAmount,
+        [secondKey]: secondAmount,
+      }));
+
+      this.ventasStore.splitActive.set(true);
+    }
+
+    // Limpiar temporales
+    this.firstPaymentMethod.set('');
+    this.firstPaymentAmount.set(0);
+    this.showSecondPaymentModal.set(false);
+  }
+
+  onSecondPaymentCancelled() {
+    // Limpiar temporales si se cancela
+    this.firstPaymentMethod.set('');
+    this.firstPaymentAmount.set(0);
+    this.showSecondPaymentModal.set(false);
   }
 
   onPaymentCancelled() {
     this.showPaymentModal.set(false);
-    this.selectedPaymentMethod.set('EFECTIVO');
   }
 
   incrementItem(idVariante: number) {

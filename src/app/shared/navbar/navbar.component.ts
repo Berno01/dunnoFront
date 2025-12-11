@@ -105,7 +105,8 @@ import { AuthService } from '../../core/services/auth.service';
           </a>
           }
 
-          <!-- Drops (Todos) -->
+          <!-- Drops (Solo admins) -->
+           @if (isAdmin()) {
           <a
             routerLink="/drops"
             routerLinkActive="bg-black text-white"
@@ -124,7 +125,7 @@ import { AuthService } from '../../core/services/auth.service';
           </a>
 
           <!-- Inventario (Solo Admin) -->
-          @if (isAdmin()) {
+          
           <a
             routerLink="/inventario"
             routerLinkActive="bg-black text-white"

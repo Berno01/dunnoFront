@@ -53,6 +53,7 @@ import { CommonModule } from '@angular/common';
         >
           {{ product.nombreModelo }}
         </h3>
+        <p class="text-base font-bold text-gray-900 mt-1">Bs. {{ product.precio.toFixed(2) }}</p>
       </div>
     </div>
   `,

@@ -57,13 +57,64 @@ import { VentaDTO } from '../../../../core/models/venta.models';
 
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <!-- Date Picker -->
-              <div class="relative">
-                <input
-                  type="date"
-                  class="w-full px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm outline-none focus:border-black"
-                  [ngModel]="selectedDate()"
-                  (ngModelChange)="onDateChange($event)"
-                />
+              <div class="flex items-center gap-2">
+                @if (!dateRangeMode()) {
+                <!-- Single Date Mode -->
+                <div class="relative">
+                  <input
+                    type="date"
+                    class="w-full px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm outline-none focus:border-black"
+                    [ngModel]="selectedDateStart()"
+                    (ngModelChange)="onSingleDateChange($event)"
+                    title="Fecha"
+                  />
+                </div>
+                } @else {
+                <!-- Date Range Mode -->
+                <div class="relative">
+                  <input
+                    type="date"
+                    class="w-full px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm outline-none focus:border-black"
+                    [ngModel]="selectedDateStart()"
+                    (ngModelChange)="onDateStartChange($event)"
+                    title="Fecha inicio"
+                  />
+                </div>
+                <span class="text-gray-400 text-xs">-</span>
+                <div class="relative">
+                  <input
+                    type="date"
+                    class="w-full px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm outline-none focus:border-black"
+                    [ngModel]="selectedDateEnd()"
+                    (ngModelChange)="onDateEndChange($event)"
+                    [min]="selectedDateStart()"
+                    title="Fecha fin"
+                  />
+                </div>
+                }
+                <!-- Toggle Range Mode Button -->
+                <button
+                  type="button"
+                  class="p-2 border border-gray-300 hover:border-black hover:bg-gray-50 transition-colors"
+                  (click)="toggleDateRangeMode()"
+                  [title]="dateRangeMode() ? 'Cambiar a fecha única' : 'Cambiar a rango de fechas'"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    [class.text-black]="dateRangeMode()"
+                    [class.text-gray-400]="!dateRangeMode()"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    ></path>
+                  </svg>
+                </button>
               </div>
 
               <!-- Botón Nueva Venta -->
@@ -131,11 +182,6 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                   Tipo
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                >
-                  Estado
-                </th>
-                <th
                   class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
                   Efectivo
@@ -153,13 +199,30 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 <th
                   class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
+                  Giftcard
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                >
                   Total
                 </th>
+                <th
+                  class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                >
+                  Descuento
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                >
+                  Usuario
+                </th>
+                @if (isAdmin()) {
                 <th
                   class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
                   Acciones
                 </th>
+                }
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -183,17 +246,6 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                     {{ sale.tipo_venta }}
                   </span>
                 </td>
-                <td class="px-6 py-4 text-sm">
-                  <span
-                    class="px-2 py-1 text-xs font-medium"
-                    [class.bg-green-100]="sale.estado_venta !== false"
-                    [class.text-green-800]="sale.estado_venta !== false"
-                    [class.bg-red-100]="sale.estado_venta === false"
-                    [class.text-red-800]="sale.estado_venta === false"
-                  >
-                    {{ sale.estado_venta === false ? 'ANULADA' : 'ACTIVA' }}
-                  </span>
-                </td>
                 <td class="px-6 py-4 text-sm text-gray-900 text-right">
                   {{ sale.monto_efectivo.toFixed(2) }}
                 </td>
@@ -203,9 +255,34 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 <td class="px-6 py-4 text-sm text-gray-900 text-right">
                   {{ sale.monto_tarjeta.toFixed(2) }}
                 </td>
+                <td class="px-6 py-4 text-sm text-gray-900 text-right">
+                  {{ (sale.monto_giftcard || 0).toFixed(2) }}
+                </td>
                 <td class="px-6 py-4 text-sm font-semibold text-gray-900 text-right">
                   {{ sale.total.toFixed(2) }}
                 </td>
+                <td class="px-6 py-4 text-sm text-gray-900 text-right">
+                  @if (sale.descuento && sale.descuento > 0) {
+                  <div class="flex flex-col items-end gap-0.5">
+                    <span class="font-medium">{{ sale.descuento.toFixed(2) }}</span>
+                    <span
+                      class="text-xs px-1.5 py-0.5 rounded"
+                      [class.bg-blue-100]="sale.tipo_descuento === 'DESCUENTO'"
+                      [class.text-blue-700]="sale.tipo_descuento === 'DESCUENTO'"
+                      [class.bg-purple-100]="sale.tipo_descuento === 'PROMOCION'"
+                      [class.text-purple-700]="sale.tipo_descuento === 'PROMOCION'"
+                    >
+                      {{ sale.tipo_descuento }}
+                    </span>
+                  </div>
+                  } @else {
+                  <span class="text-gray-400">-</span>
+                  }
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                  {{ sale.username || '-' }}
+                </td>
+                @if (isAdmin()) {
                 <td class="px-6 py-4 text-sm text-center">
                   <div class="flex items-center justify-center gap-2">
                     @if (sale.estado_venta !== false) {
@@ -261,9 +338,40 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                     }
                   </div>
                 </td>
+                }
               </tr>
               }
             </tbody>
+            <!-- Footer: Totales -->
+            <tfoot class="bg-gray-100 border-t-2 border-gray-300">
+              <tr>
+                <td colspan="3" class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
+                  TOTALES:
+                </td>
+                <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
+                  {{ totals().efectivo.toFixed(2) }}
+                </td>
+                <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
+                  {{ totals().qr.toFixed(2) }}
+                </td>
+                <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
+                  {{ totals().tarjeta.toFixed(2) }}
+                </td>
+                <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
+                  {{ totals().giftcard.toFixed(2) }}
+                </td>
+                <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right bg-gray-200">
+                  {{ totals().total.toFixed(2) }}
+                </td>
+                <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
+                  {{ totals().descuento.toFixed(2) }}
+                </td>
+                <td class="px-6 py-4"></td>
+                @if (isAdmin()) {
+                <td class="px-6 py-4"></td>
+                }
+              </tr>
+            </tfoot>
           </table>
         </div>
 
@@ -274,7 +382,7 @@ import { VentaDTO } from '../../../../core/models/venta.models';
             class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4"
             [class.opacity-60]="sale.estado_venta === false"
           >
-            <!-- Header: Hora + Estado -->
+            <!-- Header: Hora + Usuario -->
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
                 <svg
@@ -294,15 +402,17 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                   formatTime(sale.fecha_venta)
                 }}</span>
               </div>
-              <span
-                class="px-2 py-1 text-xs font-bold rounded"
-                [class.bg-green-100]="sale.estado_venta !== false"
-                [class.text-green-800]="sale.estado_venta !== false"
-                [class.bg-red-100]="sale.estado_venta === false"
-                [class.text-red-800]="sale.estado_venta === false"
-              >
-                {{ sale.estado_venta === false ? 'ANULADA' : 'ACTIVA' }}
-              </span>
+              <div class="flex items-center gap-1.5 text-xs text-gray-600">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  ></path>
+                </svg>
+                <span class="font-medium">{{ sale.username || 'N/A' }}</span>
+              </div>
             </div>
 
             <!-- Info Grid -->
@@ -350,14 +460,39 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                   >Bs. {{ sale.monto_tarjeta.toFixed(2) }}</span
                 >
               </div>
+              } @if (sale.monto_giftcard && sale.monto_giftcard > 0) {
+              <div class="flex justify-between">
+                <span class="text-gray-600">Giftcard</span>
+                <span class="font-medium text-gray-900"
+                  >Bs. {{ sale.monto_giftcard.toFixed(2) }}</span
+                >
+              </div>
               }
               <div class="flex justify-between pt-1.5 border-t border-gray-200">
                 <span class="font-semibold text-gray-900">TOTAL</span>
                 <span class="font-bold text-gray-900">Bs. {{ sale.total.toFixed(2) }}</span>
               </div>
+              @if (sale.descuento && sale.descuento > 0) {
+              <div class="flex justify-between items-center pt-1.5 border-t border-gray-200">
+                <span class="text-gray-600">Descuento</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-medium text-gray-900">Bs. {{ sale.descuento.toFixed(2) }}</span>
+                  <span
+                    class="px-1.5 py-0.5 text-xs rounded"
+                    [class.bg-blue-100]="sale.tipo_descuento === 'DESCUENTO'"
+                    [class.text-blue-700]="sale.tipo_descuento === 'DESCUENTO'"
+                    [class.bg-purple-100]="sale.tipo_descuento === 'PROMOCION'"
+                    [class.text-purple-700]="sale.tipo_descuento === 'PROMOCION'"
+                  >
+                    {{ sale.tipo_descuento }}
+                  </span>
+                </div>
+              </div>
+              }
             </div>
 
             <!-- Acciones -->
+            @if (isAdmin()) {
             <div class="flex gap-2">
               @if (sale.estado_venta !== false) {
               <button
@@ -408,6 +543,42 @@ import { VentaDTO } from '../../../../core/models/venta.models';
               </button>
               }
             </div>
+            }
+          </div>
+          }
+
+          <!-- Totales Mobile -->
+          @if (sales().length > 0) {
+          <div class="bg-gray-100 border-2 border-gray-300 rounded-lg p-4 mt-4">
+            <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Totales</h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Efectivo:</span>
+                <span class="font-bold text-gray-900">Bs. {{ totals().efectivo.toFixed(2) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">QR:</span>
+                <span class="font-bold text-gray-900">Bs. {{ totals().qr.toFixed(2) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Tarjeta:</span>
+                <span class="font-bold text-gray-900">Bs. {{ totals().tarjeta.toFixed(2) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Giftcard:</span>
+                <span class="font-bold text-gray-900">Bs. {{ totals().giftcard.toFixed(2) }}</span>
+              </div>
+              <div class="flex justify-between pt-2 border-t-2 border-gray-300">
+                <span class="font-bold text-gray-900">TOTAL:</span>
+                <span class="font-bold text-gray-900 text-base"
+                  >Bs. {{ totals().total.toFixed(2) }}</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Descuento:</span>
+                <span class="font-bold text-gray-900">Bs. {{ totals().descuento.toFixed(2) }}</span>
+              </div>
+            </div>
           </div>
           }
         </div>
@@ -426,9 +597,23 @@ export class SalesListComponent {
   sales = signal<VentaDTO[]>([]);
   loading = signal<boolean>(false);
   selectedBranch = signal<number | null>(null);
-  selectedDate = signal<string>(this.getTodayString());
+  selectedDateStart = signal<string>(this.getTodayString());
+  selectedDateEnd = signal<string>(this.getTodayString());
+  dateRangeMode = signal<boolean>(false);
 
   isAdmin = computed(() => this.sessionService.rol() === 'ADMIN');
+
+  totals = computed(() => {
+    const salesList = this.sales();
+    return {
+      efectivo: salesList.reduce((sum, sale) => sum + (sale.monto_efectivo || 0), 0),
+      qr: salesList.reduce((sum, sale) => sum + (sale.monto_qr || 0), 0),
+      tarjeta: salesList.reduce((sum, sale) => sum + (sale.monto_tarjeta || 0), 0),
+      giftcard: salesList.reduce((sum, sale) => sum + (sale.monto_giftcard || 0), 0),
+      total: salesList.reduce((sum, sale) => sum + (sale.total || 0), 0),
+      descuento: salesList.reduce((sum, sale) => sum + (sale.descuento || 0), 0),
+    };
+  });
 
   constructor() {
     // Inicializar sucursal según el rol
@@ -440,8 +625,9 @@ export class SalesListComponent {
     effect(() => {
       if (isPlatformBrowser(this.platformId)) {
         const branch = this.selectedBranch();
-        const date = this.selectedDate();
-        this.loadSales(branch, date);
+        const dateStart = this.selectedDateStart();
+        const dateEnd = this.selectedDateEnd();
+        this.loadSales(branch, dateStart, dateEnd);
       }
     });
   }
@@ -460,8 +646,25 @@ export class SalesListComponent {
     }
   }
 
-  onDateChange(value: string) {
-    this.selectedDate.set(value);
+  onSingleDateChange(value: string) {
+    this.selectedDateStart.set(value);
+    this.selectedDateEnd.set(value); // Mantener ambas fechas iguales en modo single
+  }
+
+  onDateStartChange(value: string) {
+    this.selectedDateStart.set(value);
+  }
+
+  onDateEndChange(value: string) {
+    this.selectedDateEnd.set(value);
+  }
+
+  toggleDateRangeMode() {
+    this.dateRangeMode.set(!this.dateRangeMode());
+    // Si cambiamos a modo single, sincronizar la fecha fin con la fecha inicio
+    if (!this.dateRangeMode()) {
+      this.selectedDateEnd.set(this.selectedDateStart());
+    }
   }
 
   onNewSale() {
@@ -513,8 +716,9 @@ export class SalesListComponent {
 
   private reloadSales() {
     const branch = this.selectedBranch();
-    const date = this.selectedDate();
-    this.loadSales(branch, date);
+    const dateStart = this.selectedDateStart();
+    const dateEnd = this.selectedDateEnd();
+    this.loadSales(branch, dateStart, dateEnd);
   }
 
   getBranchName(id: number): string {
@@ -532,10 +736,10 @@ export class SalesListComponent {
     return date.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
   }
 
-  private loadSales(idSucursal: number | null, fecha: string) {
+  private loadSales(idSucursal: number | null, fecha: string, fecha_fin: string) {
     this.loading.set(true);
 
-    this.ventasService.getSales(idSucursal ?? undefined, fecha).subscribe({
+    this.ventasService.getSales(idSucursal ?? undefined, fecha, fecha_fin).subscribe({
       next: (data) => {
         this.sales.set(data);
         this.loading.set(false);

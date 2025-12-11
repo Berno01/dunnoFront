@@ -199,6 +199,22 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
               />
             </div>
 
+            <!-- Precio -->
+            <div>
+              <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
+                PRECIO (Bs.)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm transition-colors"
+                placeholder="0.00"
+                [(ngModel)]="formDraft().precio"
+                name="precio"
+              />
+            </div>
+
             <!-- Marca -->
             <div>
               <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
@@ -579,6 +595,7 @@ export class NuevoModeloModalComponent {
         // Actualizar el formulario con los datos del modelo
         this.formDraft.set({
           nombreModelo: modelo.nombre,
+          precio: modelo.precio || 0,
           idMarca: modelo.marca.id,
           idCategoria: modelo.categoria.id,
           idCorte: modelo.corte.id,
@@ -599,6 +616,7 @@ export class NuevoModeloModalComponent {
   // Estado del formulario
   formDraft = signal<FormDraftState>({
     nombreModelo: '',
+    precio: 0,
     idMarca: null,
     idCategoria: null,
     idCorte: null,
@@ -643,6 +661,7 @@ export class NuevoModeloModalComponent {
     const draft = this.formDraft();
     return (
       draft.nombreModelo.trim() !== '' &&
+      draft.precio > 0 &&
       draft.idMarca !== null &&
       draft.idCategoria !== null &&
       draft.idCorte !== null &&
@@ -1141,6 +1160,7 @@ export class NuevoModeloModalComponent {
   ) {
     const payload = {
       nombreModelo: draft.nombreModelo,
+      precio: draft.precio,
       idMarca: draft.idMarca!,
       idCategoria: draft.idCategoria!,
       idCorte: draft.idCorte!,

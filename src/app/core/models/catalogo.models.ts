@@ -4,6 +4,7 @@ export interface ResumenPrendaDTO {
   nombreMarca: string;
   nombreCategoria: string;
   fotoPortada: string;
+  precio: number;
   stockTotal: number;
   pocasUnidades: boolean;
 }
@@ -27,6 +28,7 @@ export interface DetallePrendaDTO {
   nombreMarca: string;
   nombreCategoria: string;
   nombreCorte: string;
+  precio: number;
   stockTotalSucursal: number;
   colores: ColorDTO[];
 }

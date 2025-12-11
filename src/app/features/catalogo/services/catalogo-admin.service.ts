@@ -39,6 +39,7 @@ export class CatalogoAdminService {
         modelos.map((modelo) => ({
           id: modelo.id,
           nombre: modelo.nombre,
+          precio: modelo.precio || 0,
           marca: modelo.marca,
           categoria: modelo.categoria,
           corte: modelo.corte,
@@ -62,6 +63,7 @@ export class CatalogoAdminService {
       map((modelo) => ({
         id: modelo.id,
         nombre: modelo.nombre,
+        precio: modelo.precio || 0,
         marca: modelo.marca,
         categoria: modelo.categoria,
         corte: modelo.corte,

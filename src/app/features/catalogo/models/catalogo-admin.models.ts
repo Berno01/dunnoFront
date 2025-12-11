@@ -50,6 +50,7 @@ export interface ColorModeloDTO {
 export interface ModeloDTO {
   id: number;
   nombre: string;
+  precio: number;
   marca: MarcaDTO;
   categoria: CategoriaDTO;
   corte: CorteDTO;
@@ -67,6 +68,7 @@ export interface ApiColorModeloDTO {
 export interface ApiModeloDTO {
   id: number;
   nombre: string;
+  precio: number;
   marca: MarcaDTO;
   categoria: CategoriaDTO;
   corte: CorteDTO;
