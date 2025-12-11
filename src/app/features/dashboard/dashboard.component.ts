@@ -219,7 +219,7 @@ export class DashboardComponent implements OnInit {
       ],
       chart: {
         type: 'area',
-        height: 350,
+        height: 250,
         toolbar: { show: false },
         fontFamily: 'inherit',
       },
@@ -236,6 +236,11 @@ export class DashboardComponent implements OnInit {
       },
       yaxis: {
         show: true,
+        labels: {
+          formatter: (value: number) => {
+            return value.toFixed(0);
+          },
+        },
       },
       grid: {
         strokeDashArray: 4,
