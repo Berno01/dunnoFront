@@ -151,4 +151,49 @@ export class CatalogoAdminService {
       codigoHex,
     });
   }
+
+  // ========== UPDATE METHODS ==========
+  /**
+   * PUT /api/catalogo/marcas/{id}
+   * Actualiza una marca existente
+   */
+  updateMarca(id: number, nombre: string): Observable<MarcaDTO> {
+    return this.http.put<MarcaDTO>(`${this.apiUrl}/catalogo/marcas/${id}`, { id, nombre });
+  }
+
+  /**
+   * PUT /api/catalogo/categorias/{id}
+   * Actualiza una categoría existente
+   */
+  updateCategoria(id: number, nombre: string): Observable<CategoriaDTO> {
+    return this.http.put<CategoriaDTO>(`${this.apiUrl}/catalogo/categorias/${id}`, { id, nombre });
+  }
+
+  /**
+   * PUT /api/catalogo/cortes/{id}
+   * Actualiza un corte existente
+   */
+  updateCorte(id: number, nombre: string): Observable<CorteDTO> {
+    return this.http.put<CorteDTO>(`${this.apiUrl}/catalogo/cortes/${id}`, { id, nombre });
+  }
+
+  /**
+   * PUT /api/catalogo/tallas/{id}
+   * Actualiza una talla existente
+   */
+  updateTalla(id: number, nombre: string): Observable<TallaDTO> {
+    return this.http.put<TallaDTO>(`${this.apiUrl}/catalogo/tallas/${id}`, { id, nombre });
+  }
+
+  /**
+   * PUT /api/catalogo/colores/{id}
+   * Actualiza un color existente
+   */
+  updateColor(id: number, nombre: string, codigoHex: string): Observable<ColorDTO> {
+    return this.http.put<ColorDTO>(`${this.apiUrl}/catalogo/colores/${id}`, {
+      id,
+      nombre,
+      codigoHex,
+    });
+  }
 }

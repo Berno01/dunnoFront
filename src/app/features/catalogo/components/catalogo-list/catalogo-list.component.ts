@@ -234,6 +234,7 @@ import {
           <app-product-card-admin
             [modelo]="modelo"
             (cardClick)="onEditModelo($event)"
+            (deleteClick)="onDeleteModelo($event)"
           ></app-product-card-admin>
           }
         </div>
@@ -390,6 +391,19 @@ export class CatalogoListComponent implements OnInit {
       next: (data) => this.opciones.set(data),
       error: (err) => console.error('Error recargando opciones:', err),
     });
+  }
+
+  onDeleteModelo(id: number) {
+    if (confirm('¿Estás seguro de eliminar este modelo?')) {
+      this.catalogoService.deleteModelo(id).subscribe({
+        next: () => {
+          this.modelos.update((current) => current.filter((m) => m.id !== id));
+        },
+        error: (err) => {
+          console.error('Error deleting modelo', err);
+        },
+      });
+    }
   }
 
   onEditModelo(id: number) {

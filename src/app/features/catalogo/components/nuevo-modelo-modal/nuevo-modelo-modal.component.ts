@@ -220,18 +220,25 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
               <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
                 MARCA
               </label>
-              <select
-                class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm bg-transparent transition-colors"
-                [(ngModel)]="formDraft().idMarca"
-                name="idMarca"
-                (change)="onMarcaChange($event)"
-              >
-                <option [value]="null" disabled>SELECCIONA UNA MARCA</option>
-                <option value="CREATE_NEW" class="font-bold">+ CREAR NUEVA MARCA...</option>
-                @for (marca of opciones().marcas; track marca.id) {
-                <option [value]="marca.id">{{ marca.nombre }}</option>
+              <div class="flex gap-2 items-center">
+                <select
+                  class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm bg-transparent transition-colors"
+                  [ngModel]="formDraft().idMarca"
+                  (ngModelChange)="onMarcaSelected($event)"
+                  name="idMarca"
+                >
+                  <option [ngValue]="null" disabled>SELECCIONA UNA MARCA</option>
+                  <option [ngValue]="'CREATE_NEW'" class="font-bold">+ CREAR NUEVA MARCA...</option>
+                  @for (marca of opciones().marcas; track marca.id) {
+                  <option [ngValue]="marca.id">{{ marca.nombre }}</option>
+                  }
+                </select>
+                @if (isValidId(formDraft().idMarca)) {
+                  <button type="button" class="text-gray-400 hover:text-black p-1" (click)="onEditMarca(formDraft().idMarca!)" title="Editar marca">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
                 }
-              </select>
+              </div>
             </div>
 
             <!-- Categoría -->
@@ -239,18 +246,25 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
               <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
                 CATEGORÍA
               </label>
-              <select
-                class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm bg-transparent transition-colors"
-                [(ngModel)]="formDraft().idCategoria"
-                name="idCategoria"
-                (change)="onCategoriaChange($event)"
-              >
-                <option [value]="null" disabled>SELECCIONA UNA CATEGORÍA</option>
-                <option value="CREATE_NEW" class="font-bold">+ CREAR NUEVA CATEGORÍA...</option>
-                @for (cat of opciones().categorias; track cat.id) {
-                <option [value]="cat.id">{{ cat.nombre }}</option>
+              <div class="flex gap-2 items-center">
+                <select
+                  class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm bg-transparent transition-colors"
+                  [ngModel]="formDraft().idCategoria"
+                  (ngModelChange)="onCategoriaSelected($event)"
+                  name="idCategoria"
+                >
+                  <option [ngValue]="null" disabled>SELECCIONA UNA CATEGORÍA</option>
+                  <option [ngValue]="'CREATE_NEW'" class="font-bold">+ CREAR NUEVA CATEGORÍA...</option>
+                  @for (cat of opciones().categorias; track cat.id) {
+                  <option [ngValue]="cat.id">{{ cat.nombre }}</option>
+                  }
+                </select>
+                @if (isValidId(formDraft().idCategoria)) {
+                  <button type="button" class="text-gray-400 hover:text-black p-1" (click)="onEditCategoria(formDraft().idCategoria!)" title="Editar categoría">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
                 }
-              </select>
+              </div>
             </div>
 
             <!-- Corte / Fit -->
@@ -260,19 +274,29 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
               </label>
               <div class="flex gap-3 items-center flex-wrap">
                 @for (corte of opciones().cortes; track corte.id) {
-                <button
-                  type="button"
-                  class="px-6 py-2 text-xs font-bold tracking-wider transition-all"
-                  [class.bg-black]="formDraft().idCorte === corte.id"
-                  [class.text-white]="formDraft().idCorte === corte.id"
-                  [class.bg-white]="formDraft().idCorte !== corte.id"
-                  [class.text-black]="formDraft().idCorte !== corte.id"
-                  [class.border]="formDraft().idCorte !== corte.id"
-                  [class.border-gray-300]="formDraft().idCorte !== corte.id"
-                  (click)="selectCorte(corte.id)"
-                >
-                  {{ corte.nombre.toUpperCase() }}
-                </button>
+                <div class="relative group">
+                  <button
+                    type="button"
+                    class="px-6 py-2 text-xs font-bold tracking-wider transition-all"
+                    [class.bg-black]="formDraft().idCorte === corte.id"
+                    [class.text-white]="formDraft().idCorte === corte.id"
+                    [class.bg-white]="formDraft().idCorte !== corte.id"
+                    [class.text-black]="formDraft().idCorte !== corte.id"
+                    [class.border]="formDraft().idCorte !== corte.id"
+                    [class.border-gray-300]="formDraft().idCorte !== corte.id"
+                    (click)="selectCorte(corte.id)"
+                  >
+                    {{ corte.nombre.toUpperCase() }}
+                  </button>
+                  <button
+                    type="button"
+                    class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-black z-10"
+                    (click)="$event.stopPropagation(); onEditCorte(corte.id)"
+                    title="Editar corte"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                </div>
                 }
 
                 <!-- Botón + para crear nuevo corte -->
@@ -301,29 +325,39 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
               </label>
               <div class="flex gap-3 items-center flex-wrap">
                 @for (color of opciones().colores; track color.id) {
-                <button
-                  type="button"
-                  class="w-10 h-10 rounded-full border-4 transition-all relative"
-                  [style.background-color]="color.codigoHex"
-                  [class.border-black]="isColorSelected(color.id)"
-                  [class.border-transparent]="!isColorSelected(color.id)"
-                  (click)="toggleColor(color)"
-                  [title]="color.nombre + ' (' + color.codigoHex + ')'"
-                >
-                  @if (isColorSelected(color.id)) {
-                  <svg
-                    class="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow-md"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+                <div class="relative group">
+                  <button
+                    type="button"
+                    class="w-10 h-10 rounded-full border-4 transition-all relative"
+                    [style.background-color]="color.codigoHex"
+                    [class.border-black]="isColorSelected(color.id)"
+                    [class.border-transparent]="!isColorSelected(color.id)"
+                    (click)="toggleColor(color)"
+                    [title]="color.nombre + ' (' + color.codigoHex + ')'"
                   >
-                    <path
-                      fill-rule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clip-rule="evenodd"
-                    ></path>
-                  </svg>
-                  }
-                </button>
+                    @if (isColorSelected(color.id)) {
+                    <svg
+                      class="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow-md"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-black z-10"
+                    (click)="$event.stopPropagation(); onEditColor(color.id)"
+                    title="Editar color"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                </div>
                 }
 
                 <!-- Botón + para agregar color -->
@@ -351,19 +385,29 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
               </label>
               <div class="flex gap-3 items-center flex-wrap">
                 @for (talla of opciones().tallas; track talla.id) {
-                <button
-                  type="button"
-                  class="w-12 h-12 text-sm font-bold transition-all"
-                  [class.bg-black]="isTallaSelected(talla.id)"
-                  [class.text-white]="isTallaSelected(talla.id)"
-                  [class.bg-white]="!isTallaSelected(talla.id)"
-                  [class.text-black]="!isTallaSelected(talla.id)"
-                  [class.border]="!isTallaSelected(talla.id)"
-                  [class.border-gray-300]="!isTallaSelected(talla.id)"
-                  (click)="toggleTalla(talla.id)"
-                >
-                  {{ talla.nombre }}
-                </button>
+                <div class="relative group">
+                  <button
+                    type="button"
+                    class="w-12 h-12 text-sm font-bold transition-all"
+                    [class.bg-black]="isTallaSelected(talla.id)"
+                    [class.text-white]="isTallaSelected(talla.id)"
+                    [class.bg-white]="!isTallaSelected(talla.id)"
+                    [class.text-black]="!isTallaSelected(talla.id)"
+                    [class.border]="!isTallaSelected(talla.id)"
+                    [class.border-gray-300]="!isTallaSelected(talla.id)"
+                    (click)="toggleTalla(talla.id)"
+                  >
+                    {{ talla.nombre }}
+                  </button>
+                  <button
+                    type="button"
+                    class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-black z-10"
+                    (click)="$event.stopPropagation(); onEditTalla(talla.id)"
+                    title="Editar talla"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                </div>
                 }
 
                 <!-- Botón + para agregar talla -->
@@ -637,6 +681,8 @@ export class NuevoModeloModalComponent {
   // Mini-modal state
   showMiniModal = signal<boolean>(false);
   miniModalType = signal<'marca' | 'categoria' | 'corte' | 'talla' | 'color' | null>(null);
+  miniModalMode = signal<'create' | 'edit'>('create');
+  miniModalId = signal<number | null>(null);
   miniModalTitle = signal<string>('');
   miniModalPlaceholder = signal<string>('');
   miniModalValue = ''; // Propiedad normal para ngModel
@@ -735,6 +781,11 @@ export class NuevoModeloModalComponent {
     };
 
     reader.readAsDataURL(file);
+  }
+
+  // Helper para validar ID en template
+  isValidId(id: number | null): boolean {
+    return typeof id === 'number' && id > 0;
   }
 
   // Métodos de selección
@@ -873,20 +924,22 @@ export class NuevoModeloModalComponent {
   }
 
   // Manejar cambio en select de Marca
-  onMarcaChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    if (select.value === 'CREATE_NEW') {
+  onMarcaSelected(value: number | string | null) {
+    if (value === 'CREATE_NEW') {
       this.formDraft.update((d) => ({ ...d, idMarca: null }));
       this.openMiniModalMarca();
+    } else {
+      this.formDraft.update((d) => ({ ...d, idMarca: value as number | null }));
     }
   }
 
   // Manejar cambio en select de Categoría
-  onCategoriaChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    if (select.value === 'CREATE_NEW') {
+  onCategoriaSelected(value: number | string | null) {
+    if (value === 'CREATE_NEW') {
       this.formDraft.update((d) => ({ ...d, idCategoria: null }));
       this.openMiniModalCategoria();
+    } else {
+      this.formDraft.update((d) => ({ ...d, idCategoria: value as number | null }));
     }
   }
 
@@ -939,151 +992,192 @@ export class NuevoModeloModalComponent {
     this.miniModalColorHex = '#000000';
   }
 
+  // Métodos de edición
+  onEditMarca(id: number) {
+    const marca = this.opciones().marcas.find((m) => m.id === id);
+    if (!marca) return;
+    this.miniModalType.set('marca');
+    this.miniModalMode.set('edit');
+    this.miniModalId.set(id);
+    this.miniModalTitle.set('EDITAR MARCA');
+    this.miniModalPlaceholder.set('Nombre de la marca');
+    this.miniModalValue = marca.nombre;
+    this.showMiniModal.set(true);
+  }
+
+  onEditCategoria(id: number) {
+    const cat = this.opciones().categorias.find((c) => c.id === id);
+    if (!cat) return;
+    this.miniModalType.set('categoria');
+    this.miniModalMode.set('edit');
+    this.miniModalId.set(id);
+    this.miniModalTitle.set('EDITAR CATEGORÍA');
+    this.miniModalPlaceholder.set('Nombre de la categoría');
+    this.miniModalValue = cat.nombre;
+    this.showMiniModal.set(true);
+  }
+
+  onEditCorte(id: number) {
+    const corte = this.opciones().cortes.find((c) => c.id === id);
+    if (!corte) return;
+    this.miniModalType.set('corte');
+    this.miniModalMode.set('edit');
+    this.miniModalId.set(id);
+    this.miniModalTitle.set('EDITAR CORTE');
+    this.miniModalPlaceholder.set('Nombre del corte');
+    this.miniModalValue = corte.nombre;
+    this.showMiniModal.set(true);
+  }
+
+  onEditTalla(id: number) {
+    const talla = this.opciones().tallas.find((t) => t.id === id);
+    if (!talla) return;
+    this.miniModalType.set('talla');
+    this.miniModalMode.set('edit');
+    this.miniModalId.set(id);
+    this.miniModalTitle.set('EDITAR TALLA');
+    this.miniModalPlaceholder.set('Nombre de la talla');
+    this.miniModalValue = talla.nombre;
+    this.showMiniModal.set(true);
+  }
+
+  onEditColor(id: number) {
+    const color = this.opciones().colores.find((c) => c.id === id);
+    if (!color) return;
+    this.miniModalType.set('color');
+    this.miniModalMode.set('edit');
+    this.miniModalId.set(id);
+    this.miniModalTitle.set('EDITAR COLOR');
+    this.miniModalPlaceholder.set('Nombre del color');
+    this.miniModalValue = color.nombre;
+    this.miniModalColorHex = color.codigoHex;
+    this.showMiniModal.set(true);
+  }
+
   saveMiniModal() {
     const value = this.miniModalValue.trim();
     if (!value) return;
 
     const type = this.miniModalType();
+    const mode = this.miniModalMode();
+    const id = this.miniModalId();
+
     this.saving.set(true);
+
+    const successCallback = (msg: string) => {
+      this.toastService.success(msg, 4000);
+      this.saving.set(false);
+      this.closeMiniModal();
+      this.opcionesUpdated.emit();
+    };
+
+    const errorCallback = (err: any, msg: string) => {
+      console.error(msg, err);
+      this.toastService.error(msg, 4000);
+      this.saving.set(false);
+    };
 
     switch (type) {
       case 'marca':
-        this.catalogoService.createMarca(value).subscribe({
-          next: (nuevaMarca) => {
-            // Agregar la nueva marca a las opciones sin perder el estado del formulario
-            const currentOpciones = this.opciones();
-            const updatedOpciones = {
-              ...currentOpciones,
-              marcas: [...currentOpciones.marcas, nuevaMarca],
-            };
-            // Actualizar las opciones (requiere que opciones sea un signal writable)
-            // Por ahora, recargaremos las opciones
-            this.catalogoService.getOpciones().subscribe({
-              next: (opciones) => {
-                // Aquí necesitarías actualizar el input opciones desde el componente padre
-                this.toastService.success(`Marca "${nuevaMarca.nombre}" creada`, 4000);
-                this.formDraft.update((d) => ({ ...d, idMarca: nuevaMarca.id }));
-                this.saving.set(false);
-                this.closeMiniModal();
-                // Emitir evento para que el padre recargue opciones
-                this.opcionesUpdated.emit();
-              },
-            });
-          },
-          error: (err) => {
-            console.error('Error creando marca:', err);
-            this.toastService.error('Error al crear la marca', 4000);
-            this.saving.set(false);
-          },
-        });
+        if (mode === 'create') {
+          this.catalogoService.createMarca(value).subscribe({
+            next: (nuevaMarca) => {
+              successCallback(`Marca "${nuevaMarca.nombre}" creada`);
+              this.formDraft.update((d) => ({ ...d, idMarca: nuevaMarca.id }));
+            },
+            error: (err) => errorCallback(err, 'Error al crear la marca'),
+          });
+        } else {
+          this.catalogoService.updateMarca(id!, value).subscribe({
+            next: (marca) => successCallback(`Marca "${marca.nombre}" actualizada`),
+            error: (err) => errorCallback(err, 'Error al actualizar la marca'),
+          });
+        }
         break;
 
       case 'categoria':
-        this.catalogoService.createCategoria(value).subscribe({
-          next: (nuevaCategoria) => {
-            this.catalogoService.getOpciones().subscribe({
-              next: () => {
-                this.toastService.success(`Categoría "${nuevaCategoria.nombre}" creada`, 4000);
-                this.formDraft.update((d) => ({ ...d, idCategoria: nuevaCategoria.id }));
-                this.saving.set(false);
-                this.closeMiniModal();
-                this.opcionesUpdated.emit();
-              },
-            });
-          },
-          error: (err) => {
-            console.error('Error creando categoría:', err);
-            this.toastService.error('Error al crear la categoría', 4000);
-            this.saving.set(false);
-          },
-        });
+        if (mode === 'create') {
+          this.catalogoService.createCategoria(value).subscribe({
+            next: (nuevaCategoria) => {
+              successCallback(`Categoría "${nuevaCategoria.nombre}" creada`);
+              this.formDraft.update((d) => ({ ...d, idCategoria: nuevaCategoria.id }));
+            },
+            error: (err) => errorCallback(err, 'Error al crear la categoría'),
+          });
+        } else {
+          this.catalogoService.updateCategoria(id!, value).subscribe({
+            next: (cat) => successCallback(`Categoría "${cat.nombre}" actualizada`),
+            error: (err) => errorCallback(err, 'Error al actualizar la categoría'),
+          });
+        }
         break;
 
       case 'corte':
-        this.catalogoService.createCorte(value).subscribe({
-          next: (nuevoCorte) => {
-            this.catalogoService.getOpciones().subscribe({
-              next: () => {
-                this.toastService.success(`Corte "${nuevoCorte.nombre}" creado`, 4000);
-                this.formDraft.update((d) => ({ ...d, idCorte: nuevoCorte.id }));
-                this.saving.set(false);
-                this.closeMiniModal();
-                this.opcionesUpdated.emit();
-              },
-            });
-          },
-          error: (err) => {
-            console.error('Error creando corte:', err);
-            this.toastService.error('Error al crear el corte', 4000);
-            this.saving.set(false);
-          },
-        });
+        if (mode === 'create') {
+          this.catalogoService.createCorte(value).subscribe({
+            next: (nuevoCorte) => {
+              successCallback(`Corte "${nuevoCorte.nombre}" creado`);
+              this.formDraft.update((d) => ({ ...d, idCorte: nuevoCorte.id }));
+            },
+            error: (err) => errorCallback(err, 'Error al crear el corte'),
+          });
+        } else {
+          this.catalogoService.updateCorte(id!, value).subscribe({
+            next: (corte) => successCallback(`Corte "${corte.nombre}" actualizado`),
+            error: (err) => errorCallback(err, 'Error al actualizar el corte'),
+          });
+        }
         break;
 
       case 'talla':
-        this.catalogoService.createTalla(value).subscribe({
-          next: (nuevaTalla) => {
-            this.catalogoService.getOpciones().subscribe({
-              next: () => {
-                this.toastService.success(`Talla "${nuevaTalla.nombre}" creada`, 4000);
-                // Agregar la talla a las seleccionadas
-                this.formDraft.update((d) => ({
-                  ...d,
-                  idsTallasSelected: [...d.idsTallasSelected, nuevaTalla.id],
-                }));
-                this.saving.set(false);
-                this.closeMiniModal();
-                this.opcionesUpdated.emit();
-              },
-            });
-          },
-          error: (err) => {
-            console.error('Error creando talla:', err);
-            this.toastService.error('Error al crear la talla', 4000);
-            this.saving.set(false);
-          },
-        });
+        if (mode === 'create') {
+          this.catalogoService.createTalla(value).subscribe({
+            next: (nuevaTalla) => {
+              successCallback(`Talla "${nuevaTalla.nombre}" creada`);
+              this.formDraft.update((d) => ({
+                ...d,
+                idsTallasSelected: [...d.idsTallasSelected, nuevaTalla.id],
+              }));
+            },
+            error: (err) => errorCallback(err, 'Error al crear la talla'),
+          });
+        } else {
+          this.catalogoService.updateTalla(id!, value).subscribe({
+            next: (talla) => successCallback(`Talla "${talla.nombre}" actualizada`),
+            error: (err) => errorCallback(err, 'Error al actualizar la talla'),
+          });
+        }
         break;
 
       case 'color':
-        this.catalogoService.createColor(value, this.miniModalColorHex).subscribe({
-          next: (nuevoColor) => {
-            console.log('Color creado desde backend:', nuevoColor);
-            this.catalogoService.getOpciones().subscribe({
-              next: (opciones) => {
-                console.log('Opciones recargadas:', opciones.colores);
-                this.toastService.success(`Color "${nuevoColor.nombre}" creado`, 4000);
-                // Agregar el color a coloresDraft y seleccionarlo
-                // Agregar el color a coloresDraft y seleccionarlo
-                const newColorDraft: ColorDraftDTO = {
-                  idColor: nuevoColor.id,
-                  nombreColor: nuevoColor.nombre,
-                  codigoHex: nuevoColor.codigoHex,
-                  photoFile: null,
-                  previewUrl: null,
-                  isSelected: true,
-                };
-                this.formDraft.update((d) => ({
-                  ...d,
-                  coloresDraft: [...d.coloresDraft, newColorDraft],
-                  activeColorIdForUpload: nuevoColor.id,
-                }));
-                this.saving.set(false);
-                this.closeMiniModal();
-                this.opcionesUpdated.emit();
-              },
-            });
-          },
-          error: (err) => {
-            console.error('Error creando color:', err);
-            this.toastService.error('Error al crear el color', 4000);
-            this.saving.set(false);
-          },
-        });
+        if (mode === 'create') {
+          this.catalogoService.createColor(value, this.miniModalColorHex).subscribe({
+            next: (nuevoColor) => {
+              successCallback(`Color "${nuevoColor.nombre}" creado`);
+              const newColorDraft: ColorDraftDTO = {
+                idColor: nuevoColor.id,
+                nombreColor: nuevoColor.nombre,
+                codigoHex: nuevoColor.codigoHex,
+                photoFile: null,
+                previewUrl: null,
+                isSelected: true,
+              };
+              this.formDraft.update((d) => ({
+                ...d,
+                coloresDraft: [...d.coloresDraft, newColorDraft],
+                activeColorIdForUpload: nuevoColor.id,
+              }));
+            },
+            error: (err) => errorCallback(err, 'Error al crear el color'),
+          });
+        } else {
+          this.catalogoService.updateColor(id!, value, this.miniModalColorHex).subscribe({
+            next: (color) => successCallback(`Color "${color.nombre}" actualizado`),
+            error: (err) => errorCallback(err, 'Error al actualizar el color'),
+          });
+        }
         break;
     }
-
-    this.closeMiniModal();
   }
 
   // Guardar modelo

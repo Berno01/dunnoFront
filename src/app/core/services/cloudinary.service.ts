@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 interface CloudinaryResponse {
   secure_url: string;
@@ -15,8 +16,8 @@ interface CloudinaryResponse {
   providedIn: 'root',
 })
 export class CloudinaryService {
-  private cloudName = 'degp2dab5';
-  private uploadPreset = 'dunno_presset';
+  private cloudName = environment.cloudinary.cloudName;
+  private uploadPreset = environment.cloudinary.uploadPreset;
   private uploadUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`;
 
   /**
