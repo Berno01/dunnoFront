@@ -34,10 +34,17 @@ export class DropsService {
    * Obtiene todas las recepciones con filtros opcionales
    * @param filters - Filtros opcionales (fecha, idSucursal)
    */
-  getDrops(filters?: { fecha?: string; idSucursal?: number }): Observable<Drop[]> {
+  getDrops(filters?: {
+    fecha?: string;
+    fecha_fin?: string;
+    idSucursal?: number;
+  }): Observable<Drop[]> {
     let params: any = {};
     if (filters?.fecha) {
       params.fecha = filters.fecha;
+    }
+    if (filters?.fecha_fin) {
+      params.fecha_fin = filters.fecha_fin;
     }
     if (filters?.idSucursal !== undefined && filters?.idSucursal !== null) {
       params.idSucursal = filters.idSucursal.toString();

@@ -57,13 +57,64 @@ import { Drop } from '../../../../core/models/drops.models';
 
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <!-- Date Picker -->
-              <div class="relative">
-                <input
-                  type="date"
-                  class="w-full px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm outline-none focus:border-black"
-                  [ngModel]="selectedDate()"
-                  (ngModelChange)="onDateChange($event)"
-                />
+              <div class="flex items-center gap-2">
+                @if (!dateRangeMode()) {
+                <!-- Single Date Mode -->
+                <div class="relative">
+                  <input
+                    type="date"
+                    class="w-full px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm outline-none focus:border-black"
+                    [ngModel]="selectedDateStart()"
+                    (ngModelChange)="onSingleDateChange($event)"
+                    title="Fecha"
+                  />
+                </div>
+                } @else {
+                <!-- Date Range Mode -->
+                <div class="relative">
+                  <input
+                    type="date"
+                    class="w-full px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm outline-none focus:border-black"
+                    [ngModel]="selectedDateStart()"
+                    (ngModelChange)="onDateStartChange($event)"
+                    title="Fecha inicio"
+                  />
+                </div>
+                <span class="text-gray-400 text-xs">-</span>
+                <div class="relative">
+                  <input
+                    type="date"
+                    class="w-full px-3 md:px-4 py-2 border border-gray-300 text-xs md:text-sm outline-none focus:border-black"
+                    [ngModel]="selectedDateEnd()"
+                    (ngModelChange)="onDateEndChange($event)"
+                    [min]="selectedDateStart()"
+                    title="Fecha fin"
+                  />
+                </div>
+                }
+                <!-- Toggle Range Mode Button -->
+                <button
+                  type="button"
+                  class="p-2 border border-gray-300 hover:border-black hover:bg-gray-50 transition-colors"
+                  (click)="toggleDateRangeMode()"
+                  [title]="dateRangeMode() ? 'Cambiar a fecha única' : 'Cambiar a rango de fechas'"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    [class.text-black]="dateRangeMode()"
+                    [class.text-gray-400]="!dateRangeMode()"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    ></path>
+                  </svg>
+                </button>
               </div>
 
               <!-- Botón Nuevo Drop -->
@@ -123,7 +174,7 @@ import { Drop } from '../../../../core/models/drops.models';
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
-                  Fecha
+                  {{ hasMultipleDates() ? 'Fecha' : 'Hora' }}
                 </th>
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
@@ -248,7 +299,7 @@ import { Drop } from '../../../../core/models/drops.models';
             <!-- Info -->
             <div class="space-y-2 text-xs text-gray-600 mb-4">
               <div class="flex justify-between">
-                <span>Fecha:</span>
+                <span>{{ hasMultipleDates() ? 'Fecha' : 'Hora' }}:</span>
                 <span class="font-semibold text-gray-900">{{ formatDate(drop.fecha) }}</span>
               </div>
               <div class="flex justify-between">
@@ -300,11 +351,27 @@ export class DropsListComponent {
   // Signals
   drops = signal<Drop[]>([]);
   loading = signal<boolean>(true);
-  selectedDate = signal<string | null>(this.getTodayString());
+  selectedDateStart = signal<string>(this.getTodayString());
+  selectedDateEnd = signal<string>(this.getTodayString());
+  dateRangeMode = signal<boolean>(false);
   selectedBranch = signal<number | null>(null);
 
   // Computed
   isAdmin = computed(() => this.sessionService.rol() === 'ADMIN');
+
+  hasMultipleDates = computed(() => {
+    const dropsList = this.drops();
+    if (dropsList.length <= 1) return false;
+
+    const firstDrop = dropsList[0];
+    if (!firstDrop.fecha) return false;
+
+    const firstDate = new Date(firstDrop.fecha).toDateString();
+    return dropsList.some((drop) => {
+      if (!drop.fecha) return false;
+      return new Date(drop.fecha).toDateString() !== firstDate;
+    });
+  });
 
   constructor() {
     // Inicializar sucursal según el rol
@@ -326,9 +393,16 @@ export class DropsListComponent {
     this.loading.set(true);
 
     const filters: any = {};
-    if (this.selectedDate()) {
-      filters.fecha = this.selectedDate();
+    if (this.selectedDateStart()) {
+      filters.fecha = this.selectedDateStart();
     }
+    if (this.dateRangeMode() && this.selectedDateEnd()) {
+      filters.fecha_fin = this.selectedDateEnd();
+    } else {
+      // En modo single, fecha_fin es igual a fecha_inicio
+      filters.fecha_fin = this.selectedDateStart();
+    }
+
     if (this.selectedBranch() !== null) {
       filters.idSucursal = this.selectedBranch();
     }
@@ -346,9 +420,29 @@ export class DropsListComponent {
     });
   }
 
-  onDateChange(date: string): void {
-    this.selectedDate.set(date || null);
+  onSingleDateChange(value: string) {
+    this.selectedDateStart.set(value);
+    this.selectedDateEnd.set(value); // Mantener ambas fechas iguales en modo single
     this.loadDrops();
+  }
+
+  onDateStartChange(value: string) {
+    this.selectedDateStart.set(value);
+    this.loadDrops();
+  }
+
+  onDateEndChange(value: string) {
+    this.selectedDateEnd.set(value);
+    this.loadDrops();
+  }
+
+  toggleDateRangeMode() {
+    this.dateRangeMode.set(!this.dateRangeMode());
+    // Si cambiamos a modo single, sincronizar la fecha fin con la fecha inicio
+    if (!this.dateRangeMode()) {
+      this.selectedDateEnd.set(this.selectedDateStart());
+      this.loadDrops();
+    }
   }
 
   onBranchChange(value: any): void {
@@ -396,11 +490,17 @@ export class DropsListComponent {
   formatDate(fecha: Date | string): string {
     if (!fecha) return '-';
     const date = typeof fecha === 'string' ? new Date(fecha) : fecha;
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+
+    if (this.hasMultipleDates()) {
+      return date.toLocaleString('es-BO', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
+    return date.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
   }
 
   getBranchName(idSucursal: number): string {

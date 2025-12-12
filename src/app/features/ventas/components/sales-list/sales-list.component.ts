@@ -169,7 +169,7 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
-                  Hora
+                  {{ hasMultipleDates() ? 'Fecha' : 'Hora' }}
                 </th>
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
@@ -603,6 +603,20 @@ export class SalesListComponent {
 
   isAdmin = computed(() => this.sessionService.rol() === 'ADMIN');
 
+  hasMultipleDates = computed(() => {
+    const salesList = this.sales();
+    if (salesList.length <= 1) return false;
+
+    const firstSale = salesList[0];
+    if (!firstSale.fecha_venta) return false;
+
+    const firstDate = new Date(firstSale.fecha_venta).toDateString();
+    return salesList.some((sale) => {
+      if (!sale.fecha_venta) return false;
+      return new Date(sale.fecha_venta).toDateString() !== firstDate;
+    });
+  });
+
   totals = computed(() => {
     const salesList = this.sales();
     return {
@@ -733,6 +747,16 @@ export class SalesListComponent {
   formatTime(fecha?: string): string {
     if (!fecha) return '--:--';
     const date = new Date(fecha);
+
+    if (this.hasMultipleDates()) {
+      return date.toLocaleString('es-BO', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
     return date.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
   }
 
