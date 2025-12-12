@@ -21,7 +21,7 @@ import { VentaDTO } from '../../../../core/models/venta.models';
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="h-full flex flex-col bg-white">
+    <div class="h-[calc(100vh-5rem)] flex flex-col bg-white">
       <!-- Header Filtros -->
       <div class="px-4 md:px-8 py-4 md:py-6 border-b border-gray-100">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -164,7 +164,7 @@ import { VentaDTO } from '../../../../core/models/venta.models';
         <!-- Vista Desktop: Tabla -->
         <div class="hidden md:block">
           <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
+            <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
@@ -204,12 +204,12 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 <th
                   class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
-                  Total
+                  Descuento
                 </th>
                 <th
                   class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
-                  Descuento
+                  Total
                 </th>
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
@@ -258,9 +258,6 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 <td class="px-6 py-4 text-sm text-gray-900 text-right">
                   {{ (sale.monto_giftcard || 0).toFixed(2) }}
                 </td>
-                <td class="px-6 py-4 text-sm font-semibold text-gray-900 text-right">
-                  {{ sale.total.toFixed(2) }}
-                </td>
                 <td class="px-6 py-4 text-sm text-gray-900 text-right">
                   @if (sale.descuento && sale.descuento > 0) {
                   <div class="flex flex-col items-end gap-0.5">
@@ -278,6 +275,9 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                   } @else {
                   <span class="text-gray-400">-</span>
                   }
+                </td>
+                <td class="px-6 py-4 text-sm font-semibold text-gray-900 text-right">
+                  {{ sale.total.toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900">
                   {{ sale.username || '-' }}

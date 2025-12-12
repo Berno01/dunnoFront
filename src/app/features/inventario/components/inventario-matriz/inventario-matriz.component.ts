@@ -180,6 +180,30 @@ export class InventarioMatrizComponent implements OnChanges {
       .pipe(take(1))
       .subscribe({
         next: (detalle) => {
+          // Ordenar tallas según requerimiento: S, M, L, XL, 36, 38, 40, 42, 44, 46, 48
+          if (detalle && detalle.tallas_disponibles) {
+            const ordenTallas = ['S', 'M', 'L', 'XL', '36', '38', '40', '42', '44', '46', '48'];
+
+            detalle.tallas_disponibles.sort((a, b) => {
+              const indexA = ordenTallas.indexOf(a);
+              const indexB = ordenTallas.indexOf(b);
+
+              // Si ambos están en la lista definida
+              if (indexA !== -1 && indexB !== -1) {
+                return indexA - indexB;
+              }
+
+              // Si solo A está en la lista, va primero
+              if (indexA !== -1) return -1;
+
+              // Si solo B está en la lista, va primero
+              if (indexB !== -1) return 1;
+
+              // Si ninguno está, orden alfanumérico natural
+              return a.localeCompare(b, undefined, { numeric: true });
+            });
+          }
+
           this.detalle.set(detalle);
           this.loading.set(false);
         },

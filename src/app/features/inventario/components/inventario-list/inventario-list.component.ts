@@ -22,9 +22,9 @@ type CategoriaFiltro = 'Todas' | 'Poleras' | 'Pantalones' | 'Shorts' | 'Hoodies'
   imports: [CommonModule, FormsModule, InventarioMatrizComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-gray-50">
+    <div class="h-[calc(100vh-5rem)] flex flex-col bg-gray-50">
       <!-- Header -->
-      <div class="bg-white border-b border-gray-200 sticky top-0 z-20">
+      <div class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <!-- Filtros Principales -->
           <div class="space-y-3">
@@ -98,100 +98,163 @@ type CategoriaFiltro = 'Todas' | 'Poleras' | 'Pantalones' | 'Shorts' | 'Hoodies'
       </div>
 
       <!-- Contenido Principal -->
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        @if (loading()) {
-        <div class="flex items-center justify-center py-24">
-          <div
-            class="h-12 w-12 border-4 border-gray-300 border-t-black rounded-full animate-spin"
-          ></div>
-        </div>
-        } @else if (inventarioFiltrado().length === 0) {
-        <div class="text-center py-24">
-          <div class="text-gray-400 text-6xl mb-4">📦</div>
-          <p class="text-gray-500 text-lg">No se encontraron productos</p>
-        </div>
-        } @else {
-        <!-- Tabla Desktop -->
-        <div
-          class="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
-        >
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16"
+      <div class="flex-1 overflow-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          @if (loading()) {
+          <div class="flex items-center justify-center py-24">
+            <div
+              class="h-12 w-12 border-4 border-gray-300 border-t-black rounded-full animate-spin"
+            ></div>
+          </div>
+          } @else if (inventarioFiltrado().length === 0) {
+          <div class="text-center py-24">
+            <div class="text-gray-400 text-6xl mb-4">📦</div>
+            <p class="text-gray-500 text-lg">No se encontraron productos</p>
+          </div>
+          } @else {
+          <!-- Tabla Desktop -->
+          <div class="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200">
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                <tr>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16"
+                  >
+                    Foto
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Nombre
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Categoría
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Marca
+                  </th>
+                  <th
+                    class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Stock Total
+                  </th>
+                  <th
+                    class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
+                    Estado
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (item of inventarioFiltrado(); track item.id_modelo) {
+                <!-- Fila Principal -->
+                <tr
+                  class="hover:bg-gray-50 cursor-pointer transition-colors"
+                  (click)="toggleExpansion(item.id_modelo)"
                 >
-                  Foto
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                >
-                  Nombre
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                >
-                  Categoría
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                >
-                  Marca
-                </th>
-                <th
-                  class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                >
-                  Stock Total
-                </th>
-                <th
-                  class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                >
-                  Estado
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              @for (item of inventarioFiltrado(); track item.id_modelo) {
-              <!-- Fila Principal -->
-              <tr
-                class="hover:bg-gray-50 cursor-pointer transition-colors"
-                (click)="toggleExpansion(item.id_modelo)"
-              >
-                <td class="px-4 py-3">
+                  <td class="px-4 py-3">
+                    @if (item.foto_portada) {
+                    <img
+                      [src]="item.foto_portada"
+                      [alt]="item.nombre_modelo"
+                      class="w-10 h-10 object-cover rounded"
+                    />
+                    } @else {
+                    <div
+                      class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs"
+                    >
+                      Sin foto
+                    </div>
+                    }
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="font-semibold text-gray-900 text-sm">{{ item.nombre_modelo }}</div>
+                    @if (item.corte) {
+                    <div class="text-xs text-gray-500 mt-0.5">{{ item.corte }}</div>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-700">
+                    {{ item.categoria }}
+                  </td>
+                  <td class="px-4 py-3 text-sm text-gray-700">
+                    {{ item.marca }}
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <span class="text-base font-bold text-gray-900">{{
+                      item.total_stock_global
+                    }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <span
+                      class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full"
+                      [class.bg-green-100]="item.total_stock_global >= 20"
+                      [class.text-green-800]="item.total_stock_global >= 20"
+                      [class.bg-red-100]="item.total_stock_global < 10"
+                      [class.text-red-800]="item.total_stock_global < 10"
+                      [class.bg-orange-100]="
+                        item.total_stock_global >= 10 && item.total_stock_global < 20
+                      "
+                      [class.text-orange-800]="
+                        item.total_stock_global >= 10 && item.total_stock_global < 20
+                      "
+                    >
+                      @if (item.total_stock_global >= 20) { Stock Alto } @else if
+                      (item.total_stock_global < 10) { Stock Bajo } @else { Stock Medio }
+                    </span>
+                  </td>
+                </tr>
+                <!-- Fila Expandida (Matriz) -->
+                @if (isExpanded(item.id_modelo)) {
+                <tr>
+                  <td colspan="6" class="p-0">
+                    <app-inventario-matriz [idModelo]="item.id_modelo"></app-inventario-matriz>
+                  </td>
+                </tr>
+                } }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Cards Mobile -->
+          <div class="md:hidden space-y-4">
+            @for (item of inventarioFiltrado(); track item.id_modelo) {
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <!-- Card Header (Clickeable) -->
+              <div class="p-4" (click)="toggleExpansion(item.id_modelo)">
+                <div class="flex gap-4">
                   @if (item.foto_portada) {
                   <img
                     [src]="item.foto_portada"
                     [alt]="item.nombre_modelo"
-                    class="w-10 h-10 object-cover rounded"
+                    class="w-20 h-20 object-cover rounded flex-shrink-0"
                   />
                   } @else {
                   <div
-                    class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs"
+                    class="w-20 h-20 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs flex-shrink-0"
                   >
                     Sin foto
                   </div>
                   }
-                </td>
-                <td class="px-4 py-3">
-                  <div class="font-semibold text-gray-900 text-sm">{{ item.nombre_modelo }}</div>
-                  @if (item.corte) {
-                  <div class="text-xs text-gray-500 mt-0.5">{{ item.corte }}</div>
-                  }
-                </td>
-                <td class="px-4 py-3 text-sm text-gray-700">
-                  {{ item.categoria }}
-                </td>
-                <td class="px-4 py-3 text-sm text-gray-700">
-                  {{ item.marca }}
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-base font-bold text-gray-900">{{
-                    item.total_stock_global
-                  }}</span>
-                </td>
-                <td class="px-4 py-3 text-center">
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-gray-900 truncate">{{ item.nombre_modelo }}</h3>
+                    <p class="text-xs text-gray-500 mt-1">{{ item.categoria }}</p>
+                    <p class="text-xs text-gray-500">{{ item.marca }}</p>
+                    @if (item.corte) {
+                    <p class="text-xs text-gray-500">{{ item.corte }}</p>
+                    }
+                  </div>
+                </div>
+                <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                  <div>
+                    <div class="text-xs text-gray-500 mb-1">Stock Total</div>
+                    <div class="text-xl font-bold text-gray-900">{{ item.total_stock_global }}</div>
+                  </div>
                   <span
-                    class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full"
+                    class="inline-block px-3 py-1 text-xs font-semibold rounded-full"
                     [class.bg-green-100]="item.total_stock_global >= 20"
                     [class.text-green-800]="item.total_stock_global >= 20"
                     [class.bg-red-100]="item.total_stock_global < 10"
@@ -206,80 +269,17 @@ type CategoriaFiltro = 'Todas' | 'Poleras' | 'Pantalones' | 'Shorts' | 'Hoodies'
                     @if (item.total_stock_global >= 20) { Stock Alto } @else if
                     (item.total_stock_global < 10) { Stock Bajo } @else { Stock Medio }
                   </span>
-                </td>
-              </tr>
-              <!-- Fila Expandida (Matriz) -->
+                </div>
+              </div>
+              <!-- Card Expandido (Matriz) -->
               @if (isExpanded(item.id_modelo)) {
-              <tr>
-                <td colspan="6" class="p-0">
-                  <app-inventario-matriz [idModelo]="item.id_modelo"></app-inventario-matriz>
-                </td>
-              </tr>
-              } }
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Cards Mobile -->
-        <div class="md:hidden space-y-4">
-          @for (item of inventarioFiltrado(); track item.id_modelo) {
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <!-- Card Header (Clickeable) -->
-            <div class="p-4" (click)="toggleExpansion(item.id_modelo)">
-              <div class="flex gap-4">
-                @if (item.foto_portada) {
-                <img
-                  [src]="item.foto_portada"
-                  [alt]="item.nombre_modelo"
-                  class="w-20 h-20 object-cover rounded flex-shrink-0"
-                />
-                } @else {
-                <div
-                  class="w-20 h-20 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs flex-shrink-0"
-                >
-                  Sin foto
-                </div>
-                }
-                <div class="flex-1 min-w-0">
-                  <h3 class="font-semibold text-gray-900 truncate">{{ item.nombre_modelo }}</h3>
-                  <p class="text-xs text-gray-500 mt-1">{{ item.categoria }}</p>
-                  <p class="text-xs text-gray-500">{{ item.marca }}</p>
-                  @if (item.corte) {
-                  <p class="text-xs text-gray-500">{{ item.corte }}</p>
-                  }
-                </div>
-              </div>
-              <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                <div>
-                  <div class="text-xs text-gray-500 mb-1">Stock Total</div>
-                  <div class="text-xl font-bold text-gray-900">{{ item.total_stock_global }}</div>
-                </div>
-                <span
-                  class="inline-block px-3 py-1 text-xs font-semibold rounded-full"
-                  [class.bg-green-100]="item.total_stock_global >= 20"
-                  [class.text-green-800]="item.total_stock_global >= 20"
-                  [class.bg-red-100]="item.total_stock_global < 10"
-                  [class.text-red-800]="item.total_stock_global < 10"
-                  [class.bg-orange-100]="
-                    item.total_stock_global >= 10 && item.total_stock_global < 20
-                  "
-                  [class.text-orange-800]="
-                    item.total_stock_global >= 10 && item.total_stock_global < 20
-                  "
-                >
-                  @if (item.total_stock_global >= 20) { Stock Alto } @else if
-                  (item.total_stock_global < 10) { Stock Bajo } @else { Stock Medio }
-                </span>
-              </div>
+              <app-inventario-matriz [idModelo]="item.id_modelo"></app-inventario-matriz>
+              }
             </div>
-            <!-- Card Expandido (Matriz) -->
-            @if (isExpanded(item.id_modelo)) {
-            <app-inventario-matriz [idModelo]="item.id_modelo"></app-inventario-matriz>
             }
           </div>
           }
         </div>
-        }
       </div>
     </div>
   `,

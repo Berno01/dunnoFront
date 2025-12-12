@@ -21,7 +21,7 @@ import { Drop } from '../../../../core/models/drops.models';
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="h-full flex flex-col bg-white">
+    <div class="h-[calc(100vh-5rem)] flex flex-col bg-white">
       <!-- Header Filtros -->
       <div class="px-4 md:px-8 py-4 md:py-6 border-b border-gray-100">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -113,7 +113,7 @@ import { Drop } from '../../../../core/models/drops.models';
         <!-- Vista Desktop: Tabla -->
         <div class="hidden md:block">
           <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
+            <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
