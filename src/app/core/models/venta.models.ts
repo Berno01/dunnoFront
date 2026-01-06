@@ -36,4 +36,5 @@ export interface CartItem {
   precioUnitario: number;
   subtotal: number;
   stockMaximo: number;
+  cantidadOriginal?: number; // Cantidad original de la venta (solo en modo edición)
 }

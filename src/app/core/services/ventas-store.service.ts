@@ -139,8 +139,14 @@ export class VentasStoreService {
       return items.map((item) => {
         if (item.idVariante === idVariante) {
           if (nuevaCantidad <= 0) return item; // O eliminarlo? Por ahora mantenemos validación > 0
+          
+          // stockMaximo ya está ajustado con la cantidad original en modo edición
           if (nuevaCantidad > item.stockMaximo) {
             console.warn('Stock máximo excedido');
+            this.toastService.warning(
+              `Stock máximo disponible: ${item.stockMaximo} unidades`,
+              3000
+            );
             return item;
           }
           return {
@@ -443,6 +449,9 @@ export class VentasStoreService {
               }
 
               // Construir CartItem completo
+              // En modo edición, el stock disponible = stock actual + cantidad original vendida
+              const stockDisponibleParaEdicion = varianteData.talla.stock + detalleVenta.cantidad;
+              
               const cartItem: CartItem = {
                 idVariante: detalleVenta.id_variante,
                 idModelo: detalleVenta.id_modelo,
@@ -454,7 +463,8 @@ export class VentasStoreService {
                 cantidad: detalleVenta.cantidad,
                 precioUnitario: detalleVenta.precio_unitario,
                 subtotal: detalleVenta.total,
-                stockMaximo: varianteData.talla.stock,
+                stockMaximo: stockDisponibleParaEdicion, // Stock actual + cantidad original
+                cantidadOriginal: detalleVenta.cantidad, // Guardamos la cantidad original
               };
 
               hydrated.push(cartItem);
