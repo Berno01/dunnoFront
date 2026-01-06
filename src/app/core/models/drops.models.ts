@@ -12,7 +12,8 @@ export interface Drop {
   fecha: Date | string;
   idSucursal: number;
   estado?: boolean; // true=activa, false=anulada
-  detalles: DetalleDrop[];
+  detalles?: DetalleDrop[]; // Opcional: solo viene en getById, no en listado
+  totalItems?: number; // Total calculado en backend (solo en listado)
 }
 
 export interface DropRequest {

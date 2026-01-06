@@ -139,7 +139,7 @@ export class VentasStoreService {
       return items.map((item) => {
         if (item.idVariante === idVariante) {
           if (nuevaCantidad <= 0) return item; // O eliminarlo? Por ahora mantenemos validación > 0
-          
+
           // stockMaximo ya está ajustado con la cantidad original en modo edición
           if (nuevaCantidad > item.stockMaximo) {
             console.warn('Stock máximo excedido');
@@ -451,7 +451,7 @@ export class VentasStoreService {
               // Construir CartItem completo
               // En modo edición, el stock disponible = stock actual + cantidad original vendida
               const stockDisponibleParaEdicion = varianteData.talla.stock + detalleVenta.cantidad;
-              
+
               const cartItem: CartItem = {
                 idVariante: detalleVenta.id_variante,
                 idModelo: detalleVenta.id_modelo,

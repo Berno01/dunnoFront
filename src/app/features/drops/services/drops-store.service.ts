@@ -125,7 +125,14 @@ export class DropsStoreService {
         const sucursalNombre = this.getBranchName(drop.idSucursal);
         this.sessionService.setSucursal(drop.idSucursal, sucursalNombre);
 
-        // 2. Agrupar detalles por id_modelo único
+        // 2. Validar que existan detalles
+        if (!drop.detalles || drop.detalles.length === 0) {
+          console.error('No se encontraron detalles en el drop');
+          this.isLoading.set(false);
+          return;
+        }
+
+        // 3. Agrupar detalles por id_modelo único
         const modelosUnicos = new Set<number>();
         drop.detalles.forEach((detalle) => {
           if (detalle.idModelo) {
@@ -163,45 +170,48 @@ export class DropsStoreService {
             // 5. Construir DropCartItems hidratados
             const hydrated: DropCartItem[] = [];
 
-            drop.detalles.forEach((detalleDrop) => {
-              if (!detalleDrop.idModelo) {
-                console.warn('Detalle sin idModelo, omitiendo:', detalleDrop);
-                return;
-              }
+            // Validar nuevamente que existan detalles (TypeScript safety)
+            if (drop.detalles) {
+              drop.detalles.forEach((detalleDrop) => {
+                if (!detalleDrop.idModelo) {
+                  console.warn('Detalle sin idModelo, omitiendo:', detalleDrop);
+                  return;
+                }
 
-              const productDetail = catalogMap.get(detalleDrop.idModelo);
-              if (!productDetail) {
-                console.warn(`No se encontró catálogo para modelo ${detalleDrop.idModelo}`);
-                return;
-              }
+                const productDetail = catalogMap.get(detalleDrop.idModelo);
+                if (!productDetail) {
+                  console.warn(`No se encontró catálogo para modelo ${detalleDrop.idModelo}`);
+                  return;
+                }
 
-              // Buscar la variante en el árbol de colores/tallas
-              const varianteData = this.findVarianteInCatalog(
-                productDetail,
-                detalleDrop.idVariante
-              );
-
-              if (!varianteData) {
-                console.warn(
-                  `No se encontró variante ${detalleDrop.idVariante} en el catálogo del modelo ${detalleDrop.idModelo}`
+                // Buscar la variante en el árbol de colores/tallas
+                const varianteData = this.findVarianteInCatalog(
+                  productDetail,
+                  detalleDrop.idVariante
                 );
-                return;
-              }
 
-              // Construir DropCartItem completo
-              const cartItem: DropCartItem = {
-                idVariante: detalleDrop.idVariante,
-                idModelo: detalleDrop.idModelo,
-                nombreModelo: productDetail.nombreModelo,
-                nombreMarca: productDetail.nombreMarca,
-                nombreColor: varianteData.color.nombreColor,
-                nombreTalla: varianteData.talla.nombreTalla,
-                fotoUrl: varianteData.color.fotoUrl,
-                cantidad: detalleDrop.cantidad,
-              };
+                if (!varianteData) {
+                  console.warn(
+                    `No se encontró variante ${detalleDrop.idVariante} en el catálogo del modelo ${detalleDrop.idModelo}`
+                  );
+                  return;
+                }
 
-              hydrated.push(cartItem);
-            });
+                // Construir DropCartItem completo
+                const cartItem: DropCartItem = {
+                  idVariante: detalleDrop.idVariante,
+                  idModelo: detalleDrop.idModelo,
+                  nombreModelo: productDetail.nombreModelo,
+                  nombreMarca: productDetail.nombreMarca,
+                  nombreColor: varianteData.color.nombreColor,
+                  nombreTalla: varianteData.talla.nombreTalla,
+                  fotoUrl: varianteData.color.fotoUrl,
+                  cantidad: detalleDrop.cantidad,
+                };
+
+                hydrated.push(cartItem);
+              });
+            }
 
             // 6. Setear items hidratados
             this.items.set(hydrated);

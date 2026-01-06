@@ -137,12 +137,15 @@ export class DropsService {
       fecha: drop.fecha,
       idSucursal: drop.idSucursal ?? drop.id_sucursal,
       estado: drop.estado ?? true,
-      detalles: (drop.detalles ?? []).map((detalle: any) => ({
-        idDetalleRecepcion: detalle.idDetalleRecepcion ?? detalle.id_detalle_recepcion,
-        idVariante: detalle.idVariante ?? detalle.id_variante,
-        cantidad: detalle.cantidad,
-        idModelo: detalle.idModelo ?? detalle.id_modelo,
-      })),
+      totalItems: drop.totalItems ?? drop.total_items, // Viene del backend (solo en listado)
+      detalles: drop.detalles
+        ? drop.detalles.map((detalle: any) => ({
+            idDetalleRecepcion: detalle.idDetalleRecepcion ?? detalle.id_detalle_recepcion,
+            idVariante: detalle.idVariante ?? detalle.id_variante,
+            cantidad: detalle.cantidad,
+            idModelo: detalle.idModelo ?? detalle.id_modelo,
+          }))
+        : undefined, // Solo mapear si existen (getById)
     };
   }
 

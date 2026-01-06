@@ -513,7 +513,8 @@ export class DropsListComponent {
   }
 
   getTotalItems(drop: Drop): number {
-    return drop.detalles?.reduce((sum, detalle) => sum + detalle.cantidad, 0) || 0;
+    // Usar totalItems del backend (calculado en SQL)
+    return drop.totalItems ?? 0;
   }
 
   private getTodayString(): string {
