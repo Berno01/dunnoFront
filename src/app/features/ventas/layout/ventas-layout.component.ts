@@ -10,63 +10,65 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule, CatalogComponent, CartSummaryComponent],
   template: `
-    <div class="h-[calc(100vh-5rem)] flex flex-col overflow-hidden bg-white">
-      <!-- Header con botón de volver -->
-      <div
-        class="px-3 md:px-6 py-3 md:py-4 border-b border-gray-100 flex items-center gap-2 md:gap-4"
-      >
-        <button
-          type="button"
-          class="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm text-gray-600 hover:text-black transition-colors group"
-          (click)="goBack()"
+    <div class="h-[calc(100vh-5rem)] flex overflow-hidden bg-white">
+      <!-- Left Column: Header + Catalog -->
+      <div class="flex-1 flex flex-col min-w-0 lg:w-3/4 lg:border-r border-gray-200">
+        <!-- Header -->
+        <div
+          class="flex-shrink-0 px-3 md:px-6 py-3 md:py-4 border-b border-gray-100 flex items-center gap-2 md:gap-4 bg-white"
         >
-          <svg
-            class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:-translate-x-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          <button
+            type="button"
+            class="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm text-gray-600 hover:text-black transition-colors group"
+            (click)="goBack()"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 19l-7-7 7-7"
-            ></path>
-          </svg>
-          <span class="font-medium tracking-wide hidden sm:inline">VOLVER AL LISTADO</span>
-          <span class="font-medium tracking-wide sm:hidden">VOLVER</span>
-        </button>
-        <div class="h-4 w-px bg-gray-200 hidden md:block"></div>
-        <span
-          class="text-[10px] md:text-xs tracking-[0.15em] md:tracking-[0.2em] text-gray-400 uppercase truncate"
-        >
-          {{ isEditMode ? 'Editar #' + editingId : 'Nueva Venta' }}
-        </span>
-      </div>
+            <svg
+              class="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:-translate-x-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+            <span class="font-medium tracking-wide hidden sm:inline">VOLVER AL LISTADO</span>
+            <span class="font-medium tracking-wide sm:hidden">VOLVER</span>
+          </button>
+          <div class="h-4 w-px bg-gray-200 hidden md:block"></div>
+          <span
+            class="text-[10px] md:text-xs tracking-[0.15em] md:tracking-[0.2em] text-gray-400 uppercase truncate"
+          >
+            {{ isEditMode ? 'Editar #' + editingId : 'Nueva Venta' }}
+          </span>
+        </div>
 
-      <!-- Loading Overlay -->
-      @if (ventasStore.isLoading()) {
-      <div class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
-        <div class="text-center">
-          <div
-            class="h-12 w-12 border-4 border-gray-300 border-t-black rounded-full animate-spin mx-auto"
-          ></div>
-          <p class="mt-4 text-sm text-gray-600">Cargando venta...</p>
+        <!-- Catalog Container -->
+        <div class="flex-1 overflow-hidden relative">
+          <!-- Loading Overlay -->
+          @if (ventasStore.isLoading()) {
+          <div class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
+            <div class="text-center">
+              <div
+                class="h-12 w-12 border-4 border-gray-300 border-t-black rounded-full animate-spin mx-auto"
+              ></div>
+              <p class="mt-4 text-sm text-gray-600">Cargando venta...</p>
+            </div>
+          </div>
+          }
+
+          <app-catalog></app-catalog>
         </div>
       </div>
-      }
 
-      <!-- Contenido Principal -->
-      <div class="flex-1 flex overflow-hidden">
-        <!-- Catálogo (Full width en mobile, 75% en desktop) -->
-        <section class="w-full lg:w-3/4 h-full lg:border-r border-gray-200 overflow-hidden">
-          <app-catalog></app-catalog>
-        </section>
-
-        <!-- Carrito Desktop (Solo visible en desktop) -->
-        <section class="hidden lg:block lg:w-1/4 h-full bg-gray-50 overflow-hidden">
-          <app-cart-summary></app-cart-summary>
-        </section>
+      <!-- Right Column: Cart Summary (Full Height) -->
+      <div
+        class="hidden lg:block lg:w-1/4 h-full bg-gray-50 border-l border-gray-200 overflow-hidden"
+      >
+        <app-cart-summary></app-cart-summary>
       </div>
 
       <!-- Botón Flotante Mobile (Solo visible en mobile) -->

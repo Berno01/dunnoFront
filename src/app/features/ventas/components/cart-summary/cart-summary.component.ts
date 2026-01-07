@@ -23,8 +23,8 @@ import { take } from 'rxjs/operators';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="h-full flex flex-col bg-gray-50">
-      <!-- Header (Solo visible en desktop) -->
-      <div class="hidden lg:flex px-3 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-white">
+      <!-- Header (Compact & Enhanced) -->
+      <div class="hidden lg:flex flex-col px-4 py-3 border-b border-gray-200 bg-white gap-2">
         <div class="flex items-center justify-between w-full">
           <h2
             class="text-xs md:text-sm font-bold tracking-[0.15em] md:tracking-[0.2em] text-gray-900"
@@ -40,6 +40,48 @@ import { take } from 'rxjs/operators';
             Vaciar
           </button>
           }
+        </div>
+
+        <!-- Type Toggle (Moved to Top & Compact) -->
+        <div class="grid grid-cols-2 bg-gray-100 p-0.5 rounded-lg">
+          <button
+            type="button"
+            class="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[10px] font-bold tracking-wider transition-all"
+            [class.bg-white]="tipoVenta() === 'LOCAL'"
+            [class.text-black]="tipoVenta() === 'LOCAL'"
+            [class.shadow-sm]="tipoVenta() === 'LOCAL'"
+            [class.text-gray-500]="tipoVenta() !== 'LOCAL'"
+            (click)="onSelectTipoVenta('LOCAL')"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              ></path>
+            </svg>
+            LOCAL
+          </button>
+          <button
+            type="button"
+            class="flex items-center justify-center gap-1.5 py-1.5 rounded-md text-[10px] font-bold tracking-wider transition-all"
+            [class.bg-white]="tipoVenta() === 'ENVIO'"
+            [class.text-black]="tipoVenta() === 'ENVIO'"
+            [class.shadow-sm]="tipoVenta() === 'ENVIO'"
+            [class.text-gray-500]="tipoVenta() !== 'ENVIO'"
+            (click)="onSelectTipoVenta('ENVIO')"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+              ></path>
+            </svg>
+            ENVÍO
+          </button>
         </div>
       </div>
 
@@ -113,222 +155,117 @@ import { take } from 'rxjs/operators';
         }
       </div>
 
-      <!-- Payment & Total Section -->
+      <!-- Footer (Compact) -->
       @if (itemCount() > 0) {
       <div
-        class="border-t border-gray-200 bg-white px-3 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4"
+        class="border-t border-gray-200 bg-white px-4 py-3 space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]"
       >
-        <!-- Subtotal -->
-        <div class="flex items-center justify-between text-xs md:text-sm">
-          <span class="text-gray-600">Subtotal</span>
-          <span class="font-semibold text-gray-900">Bs. {{ total().toFixed(2) }}</span>
-        </div>
-
-        <!-- Descuento -->
-        <div class="flex items-center justify-between text-xs md:text-sm">
-          <button
-            type="button"
-            class="text-gray-600 hover:text-black underline"
-            (click)="onOpenDescuentoModal()"
-          >
-            {{ descuento() > 0 ? 'Modificar Descuento' : '+ Agregar Descuento' }}
-          </button>
-          <span class="text-gray-900 font-semibold">- Bs. {{ descuento().toFixed(2) }}</span>
-        </div>
-
-        <!-- Total -->
-        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
-          <span class="text-xs md:text-sm font-bold tracking-wider text-gray-900">Total</span>
-          <span class="text-lg md:text-xl font-bold text-gray-900"
-            >Bs. {{ totalConDescuento().toFixed(2) }}</span
-          >
-        </div>
-
-        <!-- Payment Method Buttons -->
-        <div class="pt-3 md:pt-4 space-y-2 md:space-y-3">
-          <div class="grid grid-cols-2 gap-1.5 md:gap-2">
-            <button
-              type="button"
-              class="px-2 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wide md:tracking-wider transition-colors"
-              [class.bg-black]="paymentAmounts().efectivo > 0"
-              [class.text-white]="paymentAmounts().efectivo > 0"
-              [class.border-black]="paymentAmounts().efectivo > 0"
-              [class.bg-white]="paymentAmounts().efectivo === 0"
-              [class.text-gray-600]="paymentAmounts().efectivo === 0"
-              [class.border-gray-300]="paymentAmounts().efectivo === 0"
-              (click)="onSelectPayment('EFECTIVO')"
-            >
-              EFECTIVO
-            </button>
-            <button
-              type="button"
-              class="px-2 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wider transition-colors"
-              [class.bg-black]="paymentAmounts().qr > 0"
-              [class.text-white]="paymentAmounts().qr > 0"
-              [class.border-black]="paymentAmounts().qr > 0"
-              [class.bg-white]="paymentAmounts().qr === 0"
-              [class.text-gray-600]="paymentAmounts().qr === 0"
-              [class.border-gray-300]="paymentAmounts().qr === 0"
-              (click)="onSelectPayment('QR')"
-            >
-              QR
-            </button>
-            <button
-              type="button"
-              class="px-2 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wider transition-colors"
-              [class.bg-black]="paymentAmounts().tarjeta > 0"
-              [class.text-white]="paymentAmounts().tarjeta > 0"
-              [class.border-black]="paymentAmounts().tarjeta > 0"
-              [class.bg-white]="paymentAmounts().tarjeta === 0"
-              [class.text-gray-600]="paymentAmounts().tarjeta === 0"
-              [class.border-gray-300]="paymentAmounts().tarjeta === 0"
-              (click)="onSelectPayment('TARJETA')"
-            >
-              TARJETA
-            </button>
-            <button
-              type="button"
-              class="px-2 md:px-3 py-2 md:py-2 border text-[10px] md:text-xs font-semibold tracking-wider transition-colors"
-              [class.bg-black]="paymentAmounts().giftcard > 0"
-              [class.text-white]="paymentAmounts().giftcard > 0"
-              [class.border-black]="paymentAmounts().giftcard > 0"
-              [class.bg-white]="paymentAmounts().giftcard === 0"
-              [class.text-gray-600]="paymentAmounts().giftcard === 0"
-              [class.border-gray-300]="paymentAmounts().giftcard === 0"
-              (click)="onSelectPayment('GIFTCARD')"
-            >
-              GIFTCARD
-            </button>
+        <!-- Totals -->
+        <div class="space-y-1.5 pb-2 border-b border-gray-100">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-gray-500">Subtotal</span>
+            <span class="font-medium">Bs. {{ total().toFixed(2) }}</span>
           </div>
+          <div class="flex items-center justify-between text-xs">
+            <button
+              type="button"
+              class="text-gray-500 hover:text-black underline decoration-dashed underline-offset-2"
+              (click)="onOpenDescuentoModal()"
+            >
+              {{ descuento() > 0 ? 'Descuento' : 'Agregar Descuento' }}
+            </button>
+            <span [class.text-red-500]="descuento() > 0" [class.text-gray-400]="descuento() === 0">
+              {{ descuento() > 0 ? '-' : '' }} Bs. {{ descuento().toFixed(2) }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-sm font-bold text-gray-900">Total</span>
+            <span class="text-xl font-bold text-gray-900 tracking-tight"
+              >Bs. {{ totalConDescuento().toFixed(2) }}</span
+            >
+          </div>
+        </div>
 
-          <!-- Payment Split Info -->
-          @if (splitActive()) {
-          <div class="text-[10px] md:text-xs text-gray-600 text-center pt-1 space-y-1">
-            @if (paymentAmounts().efectivo > 0) {
-            <div>
-              Efectivo:
-              <span class="font-semibold">Bs. {{ paymentAmounts().efectivo.toFixed(2) }}</span>
-            </div>
-            } @if (paymentAmounts().qr > 0) {
-            <div>
-              QR: <span class="font-semibold">Bs. {{ paymentAmounts().qr.toFixed(2) }}</span>
-            </div>
-            } @if (paymentAmounts().tarjeta > 0) {
-            <div>
-              Tarjeta:
-              <span class="font-semibold">Bs. {{ paymentAmounts().tarjeta.toFixed(2) }}</span>
-            </div>
-            } @if (paymentAmounts().giftcard > 0) {
-            <div>
-              Giftcard:
-              <span class="font-semibold">Bs. {{ paymentAmounts().giftcard.toFixed(2) }}</span>
-            </div>
+        <!-- Methods & Action -->
+        <div class="space-y-3">
+          <!-- Payment Methods Grid (4 cols) -->
+          <div class="grid grid-cols-4 gap-2">
+            @for (method of ['EFECTIVO', 'QR', 'TARJETA', 'GIFTCARD']; track method) {
+            <button
+              type="button"
+              class="relative px-1 py-2 border text-[9px] font-bold tracking-wider transition-all rounded hover:border-black flex flex-col items-center justify-center gap-0.5"
+              [class.bg-black]="getPaymentAmount(method) > 0"
+              [class.text-white]="getPaymentAmount(method) > 0"
+              [class.border-black]="getPaymentAmount(method) > 0"
+              [class.bg-white]="getPaymentAmount(method) === 0"
+              [class.text-gray-600]="getPaymentAmount(method) === 0"
+              [class.border-gray-200]="getPaymentAmount(method) === 0"
+              (click)="onSelectPayment(method)"
+            >
+              <span>{{ method }}</span>
+              @if(getPaymentAmount(method) > 0) {
+              <span class="text-[8px] opacity-90 font-normal"
+                >Bs. {{ getPaymentAmount(method).toFixed(2) }}</span
+              >
+              } @if(getPaymentAmount(method) > 0 && splitActive()){
+              <div
+                class="absolute -top-1.5 -right-1 bg-green-500 text-white text-[8px] px-1 rounded-full leading-tight shadow-sm z-10"
+              >
+                {{ ((getPaymentAmount(method) / totalConDescuento()) * 100).toFixed(0) }}%
+              </div>
+              }
+            </button>
             }
           </div>
-          }
 
-          <!-- Botón para resetear pagos -->
+          <!-- Reset Payments -->
           @if (splitActive()) {
-          <button
-            type="button"
-            class="w-full text-[10px] md:text-xs text-gray-500 hover:text-black underline"
-            (click)="ventasStore.resetPayments()"
+          <div
+            class="flex justify-between items-center bg-gray-50 px-2 py-1.5 rounded text-[10px] text-gray-500"
           >
-            Resetear métodos de pago
-          </button>
+            <span>Pago dividido activo</span>
+            <button
+              type="button"
+              class="hover:text-red-600 font-medium transition-colors"
+              (click)="ventasStore.resetPayments()"
+            >
+              Resetear
+            </button>
+          </div>
           }
-        </div>
 
-        <!-- Type Buttons (Local / Envío) -->
-        <div class="grid grid-cols-2 gap-1.5 md:gap-2 pt-2">
+          <!-- Confirm Button -->
           <button
             type="button"
-            class="px-3 md:px-4 py-2.5 md:py-3 text-[10px] md:text-xs font-semibold tracking-[0.15em] md:tracking-[0.2em] flex items-center justify-center gap-1.5 md:gap-2 transition-colors"
-            [class.bg-black]="tipoVenta() === 'LOCAL'"
-            [class.text-white]="tipoVenta() === 'LOCAL'"
-            [class.bg-white]="tipoVenta() !== 'LOCAL'"
-            [class.text-gray-600]="tipoVenta() !== 'LOCAL'"
-            [class.border]="tipoVenta() !== 'LOCAL'"
-            [class.border-gray-300]="tipoVenta() !== 'LOCAL'"
-            (click)="onSelectTipoVenta('LOCAL')"
+            class="w-full px-4 py-3 bg-black text-white text-xs md:text-sm font-bold tracking-[0.15em] hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            [disabled]="processing()"
+            (click)="onConfirmSale()"
           >
+            @if (processing()) {
             <svg
-              class="w-3.5 h-3.5 md:w-4 md:h-4"
+              class="animate-spin h-4 w-4 md:h-5 md:w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
               fill="none"
-              stroke="currentColor"
               viewBox="0 0 24 24"
             >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
               <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            LOCAL
-          </button>
-          <button
-            type="button"
-            class="px-3 md:px-4 py-2.5 md:py-3 text-[10px] md:text-xs font-semibold tracking-[0.15em] md:tracking-[0.2em] flex items-center justify-center gap-1.5 md:gap-2 transition-colors"
-            [class.bg-black]="tipoVenta() === 'ENVIO'"
-            [class.text-white]="tipoVenta() === 'ENVIO'"
-            [class.bg-white]="tipoVenta() !== 'ENVIO'"
-            [class.text-gray-600]="tipoVenta() !== 'ENVIO'"
-            [class.border]="tipoVenta() !== 'ENVIO'"
-            [class.border-gray-300]="tipoVenta() !== 'ENVIO'"
-            (click)="onSelectTipoVenta('ENVIO')"
-          >
-            <svg
-              class="w-3.5 h-3.5 md:w-4 md:h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-              ></path>
-            </svg>
-            ENVÍO
+            }
+            <span>{{ processing() ? 'PROCESANDO...' : 'CONFIRMAR VENTA' }}</span>
           </button>
         </div>
-
-        <!-- Confirm Sale Button -->
-        <button
-          type="button"
-          class="w-full px-4 md:px-6 py-3 md:py-4 bg-black text-white text-xs md:text-sm font-bold tracking-[0.15em] md:tracking-[0.2em] hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2 md:gap-3"
-          [disabled]="processing()"
-          (click)="onConfirmSale()"
-        >
-          @if (processing()) {
-          <svg
-            class="animate-spin h-4 w-4 md:h-5 md:w-5 text-white"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            ></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          }
-          <span class="hidden sm:inline">{{
-            processing() ? 'PROCESANDO...' : 'CONFIRMAR VENTA'
-          }}</span>
-          <span class="sm:hidden">{{ processing() ? 'PROCESANDO...' : 'CONFIRMAR' }}</span>
-        </button>
       </div>
       }
     </div>
@@ -514,7 +451,13 @@ export class CartSummaryComponent {
     });
   }
 
-  onSelectPayment(method: 'EFECTIVO' | 'QR' | 'TARJETA' | 'GIFTCARD') {
+  getPaymentAmount(method: string): number {
+    const amounts = this.paymentAmounts();
+    const key = method.toLowerCase() as 'efectivo' | 'qr' | 'tarjeta' | 'giftcard';
+    return amounts[key] || 0;
+  }
+
+  onSelectPayment(method: string) {
     const currentPayments = this.paymentAmounts();
     const activeCount = this.cantidadMetodosActivos();
 
@@ -527,7 +470,7 @@ export class CartSummaryComponent {
       return;
     }
 
-    this.selectedPaymentMethod.set(method);
+    this.selectedPaymentMethod.set(method as 'EFECTIVO' | 'QR' | 'TARJETA' | 'GIFTCARD');
     this.showPaymentModal.set(true);
   }
 
