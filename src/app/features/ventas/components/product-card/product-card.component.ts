@@ -15,11 +15,19 @@ import { CommonModule } from '@angular/common';
     >
       <!-- Imagen Container -->
       <div class="relative aspect-[4/5] w-full overflow-hidden bg-gray-100">
+        <!-- Skeleton de carga -->
+        <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
+
         <img
           [src]="getImageSrc(product)"
           [alt]="product.nombreModelo"
-          class="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+          class="absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 opacity-0"
+          [class.opacity-100]="true"
+          [class.scale-100]="true"
+          [class.group-hover:scale-105]="true"
           onerror="this.onerror=null; this.src='/assets/images/placeholder-product.svg'"
+          (load)="$event.target.classList.add('opacity-100')"
         />
 
         <!-- Badge Agotado -->

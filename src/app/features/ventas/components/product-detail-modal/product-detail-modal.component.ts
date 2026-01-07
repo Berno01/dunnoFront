@@ -50,12 +50,18 @@ import { take } from 'rxjs/operators';
             ></div>
           </div>
           } @else {
-          <img
-            [src]="primaryImage()"
-            [alt]="product()?.nombreModelo || 'Producto'"
-            class="h-full w-full max-h-[32rem] object-cover"
-            onerror="this.onerror=null; this.src='/assets/images/placeholder-product.svg'"
-          />
+          <div class="relative h-full w-full max-h-[32rem]">
+            <!-- Skeleton -->
+            <div class="absolute inset-0 bg-gray-200 animate-pulse rounded"></div>
+            <img
+              [src]="primaryImage()"
+              [alt]="product()?.nombreModelo || 'Producto'"
+              loading="lazy"
+              class="relative h-full w-full object-cover opacity-0 transition-opacity duration-500"
+              onerror="this.onerror=null; this.src='/assets/images/placeholder-product.svg'"
+              (load)="$event.target.classList.add('opacity-100')"
+            />
+          </div>
           }
         </div>
 
@@ -81,12 +87,16 @@ import { take } from 'rxjs/operators';
           } @else if (product()) {
           <div class="flex flex-col gap-4 md:gap-8">
             <!-- Imagen Mobile -->
-            <div class="md:hidden -mx-4 -mt-4">
+            <div class="md:hidden -mx-4 -mt-4 relative">
+              <!-- Skeleton -->
+              <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
               <img
                 [src]="primaryImage()"
                 [alt]="product()?.nombreModelo || 'Producto'"
-                class="h-48 md:h-64 w-full object-cover"
+                loading="lazy"
+                class="relative h-48 md:h-64 w-full object-cover opacity-0 transition-opacity duration-500"
                 onerror="this.onerror=null; this.src='/assets/images/placeholder-product.svg'"
+                (load)="$event.target.classList.add('opacity-100')"
               />
             </div>
 

@@ -15,11 +15,15 @@ import { ModeloDTO } from '../../models/catalogo-admin.models';
       <!-- Imagen del Producto -->
       <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
         @if (modelo().colores && modelo().colores.length > 0) {
+        <!-- Skeleton de carga -->
+        <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
         <img
           [src]="modelo().colores[0].fotoUrl"
           [alt]="modelo().nombre"
-          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+          class="relative w-full h-full object-cover opacity-0 transition-all duration-500 group-hover:scale-110"
           (error)="onImageError($event)"
+          (load)="$event.target.classList.add('opacity-100')"
         />
         } @else {
         <!-- Placeholder si no hay imagen -->

@@ -158,11 +158,16 @@ type CategoriaFiltro = 'Todas' | 'Poleras' | 'Pantalones' | 'Shorts' | 'Hoodies'
                 >
                   <td class="px-4 py-3">
                     @if (item.foto_portada) {
-                    <img
-                      [src]="item.foto_portada"
-                      [alt]="item.nombre_modelo"
-                      class="w-10 h-10 object-cover rounded"
-                    />
+                    <div class="relative w-10 h-10 rounded overflow-hidden">
+                      <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
+                      <img
+                        [src]="item.foto_portada"
+                        [alt]="item.nombre_modelo"
+                        loading="lazy"
+                        class="relative w-10 h-10 object-cover opacity-0 transition-opacity duration-500"
+                        (load)="$event.target.classList.add('opacity-100')"
+                      />
+                    </div>
                     } @else {
                     <div
                       class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs"
@@ -227,11 +232,16 @@ type CategoriaFiltro = 'Todas' | 'Poleras' | 'Pantalones' | 'Shorts' | 'Hoodies'
               <div class="p-4" (click)="toggleExpansion(item.id_modelo)">
                 <div class="flex gap-4">
                   @if (item.foto_portada) {
-                  <img
-                    [src]="item.foto_portada"
-                    [alt]="item.nombre_modelo"
-                    class="w-20 h-20 object-cover rounded flex-shrink-0"
-                  />
+                  <div class="relative w-20 h-20 rounded overflow-hidden flex-shrink-0">
+                    <div class="absolute inset-0 bg-gray-200 animate-pulse"></div>
+                    <img
+                      [src]="item.foto_portada"
+                      [alt]="item.nombre_modelo"
+                      loading="lazy"
+                      class="relative w-20 h-20 object-cover opacity-0 transition-opacity duration-500"
+                      (load)="$event.target.classList.add('opacity-100')"
+                    />
+                  </div>
                   } @else {
                   <div
                     class="w-20 h-20 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs flex-shrink-0"
