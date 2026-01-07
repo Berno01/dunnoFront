@@ -11,6 +11,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DropsService } from '../../../../core/services/drops.service';
+import { DropsStoreService } from '../../services/drops-store.service';
 import { SessionService } from '../../../../core/services/session.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { Drop } from '../../../../core/models/drops.models';
@@ -166,15 +167,22 @@ import { Drop } from '../../../../core/models/drops.models';
           <table class="w-full">
             <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
+                @if (hasMultipleDates()) {
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
-                  ID
+                  Fecha
+                </th>
+                }
+                <th
+                  class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                >
+                  Categoría
                 </th>
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
-                  {{ hasMultipleDates() ? 'Fecha' : 'Hora' }}
+                  Marca
                 </th>
                 <th
                   class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
@@ -184,12 +192,7 @@ import { Drop } from '../../../../core/models/drops.models';
                 <th
                   class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
                 >
-                  Cantidad Items
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                >
-                  Estado
+                  Prendas
                 </th>
                 <th
                   class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
@@ -204,26 +207,20 @@ import { Drop } from '../../../../core/models/drops.models';
                 class="hover:bg-gray-50 transition-colors"
                 [class.opacity-50]="drop.estado === false"
               >
-                <td class="px-6 py-4 text-sm font-semibold text-gray-900">
-                  #{{ drop.idRecepcion }}
-                </td>
+                @if (hasMultipleDates()) {
                 <td class="px-6 py-4 text-sm text-gray-900">{{ formatDate(drop.fecha) }}</td>
+                }
+                <td class="px-6 py-4 text-sm text-gray-900">
+                  {{ formatCategorias(drop.categorias) }}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                  {{ drop.marca || '-' }}
+                </td>
                 <td class="px-6 py-4 text-sm text-gray-900">
                   {{ getBranchName(drop.idSucursal) }}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900 text-center">
                   {{ getTotalItems(drop) }}
-                </td>
-                <td class="px-6 py-4 text-sm">
-                  <span
-                    class="px-2 py-1 text-xs font-medium"
-                    [class.bg-green-100]="drop.estado !== false"
-                    [class.text-green-800]="drop.estado !== false"
-                    [class.bg-red-100]="drop.estado === false"
-                    [class.text-red-800]="drop.estado === false"
-                  >
-                    {{ drop.estado === false ? 'ANULADO' : 'ACTIVO' }}
-                  </span>
                 </td>
                 <td class="px-6 py-4 text-sm text-center">
                   <div class="flex items-center justify-center gap-2">
@@ -284,7 +281,7 @@ import { Drop } from '../../../../core/models/drops.models';
           >
             <!-- Header -->
             <div class="flex items-center justify-between mb-3">
-              <span class="text-sm font-bold text-gray-900">#{{ drop.idRecepcion }}</span>
+              <span class="text-sm font-bold text-gray-900">{{ drop.marca || 'Sin marca' }}</span>
               <span
                 class="px-2 py-1 text-xs font-bold rounded"
                 [class.bg-green-100]="drop.estado !== false"
@@ -298,9 +295,17 @@ import { Drop } from '../../../../core/models/drops.models';
 
             <!-- Info -->
             <div class="space-y-2 text-xs text-gray-600 mb-4">
+              @if (hasMultipleDates()) {
               <div class="flex justify-between">
-                <span>{{ hasMultipleDates() ? 'Fecha' : 'Hora' }}:</span>
+                <span>Fecha:</span>
                 <span class="font-semibold text-gray-900">{{ formatDate(drop.fecha) }}</span>
+              </div>
+              }
+              <div class="flex justify-between">
+                <span>Categoría:</span>
+                <span class="font-semibold text-gray-900">{{
+                  formatCategorias(drop.categorias)
+                }}</span>
               </div>
               <div class="flex justify-between">
                 <span>Sucursal:</span>
@@ -309,7 +314,7 @@ import { Drop } from '../../../../core/models/drops.models';
                 }}</span>
               </div>
               <div class="flex justify-between">
-                <span>Items:</span>
+                <span>Prendas:</span>
                 <span class="font-semibold text-gray-900">{{ getTotalItems(drop) }}</span>
               </div>
             </div>
@@ -343,6 +348,7 @@ import { Drop } from '../../../../core/models/drops.models';
 })
 export class DropsListComponent {
   private dropsService = inject(DropsService);
+  private dropsStore = inject(DropsStoreService);
   private sessionService = inject(SessionService);
   private toastService = inject(ToastService);
   private router = inject(Router);
@@ -374,9 +380,18 @@ export class DropsListComponent {
   });
 
   constructor() {
-    // Inicializar sucursal según el rol
-    if (!this.isAdmin()) {
-      this.selectedBranch.set(this.sessionService.sucursalId());
+    // Restaurar filtros guardados si existen
+    const savedFilters = this.dropsStore.getListFilters();
+    if (savedFilters) {
+      this.selectedDateStart.set(savedFilters.dateStart);
+      this.selectedDateEnd.set(savedFilters.dateEnd);
+      this.dateRangeMode.set(savedFilters.dateRangeMode);
+      this.selectedBranch.set(savedFilters.branch);
+    } else {
+      // Inicializar sucursal según el rol si no hay filtros guardados
+      if (!this.isAdmin()) {
+        this.selectedBranch.set(this.sessionService.sucursalId());
+      }
     }
 
     // Auto-cargar al iniciar
@@ -411,12 +426,23 @@ export class DropsListComponent {
       next: (drops) => {
         this.drops.set(drops);
         this.loading.set(false);
+        // Guardar filtros actuales
+        this.saveCurrentFilters();
       },
       error: (err) => {
         console.error('Error cargando recepciones:', err);
         this.toastService.show('error', 'Error al cargar recepciones');
         this.loading.set(false);
       },
+    });
+  }
+
+  private saveCurrentFilters(): void {
+    this.dropsStore.saveListFilters({
+      dateStart: this.selectedDateStart(),
+      dateEnd: this.selectedDateEnd(),
+      dateRangeMode: this.dateRangeMode(),
+      branch: this.selectedBranch(),
     });
   }
 
@@ -515,6 +541,13 @@ export class DropsListComponent {
   getTotalItems(drop: Drop): number {
     // Usar totalItems del backend (calculado en SQL)
     return drop.totalItems ?? 0;
+  }
+
+  formatCategorias(categorias?: string[]): string {
+    if (!categorias || categorias.length === 0) {
+      return '-';
+    }
+    return categorias.join(', ');
   }
 
   private getTodayString(): string {

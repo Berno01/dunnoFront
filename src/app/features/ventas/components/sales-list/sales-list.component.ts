@@ -11,6 +11,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VentasService } from '../../../../core/services/ventas.service';
+import { VentasStoreService } from '../../../../core/services/ventas-store.service';
 import { SessionService } from '../../../../core/services/session.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { VentaDTO } from '../../../../core/models/venta.models';
@@ -247,21 +248,24 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                   </span>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900 text-right">
-                  {{ sale.monto_efectivo.toFixed(2) }}
+                  {{ sale.tipo_venta === 'ENVIO' ? '-' : sale.monto_efectivo.toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900 text-right">
-                  {{ sale.monto_qr.toFixed(2) }}
+                  {{ sale.tipo_venta === 'ENVIO' ? '-' : sale.monto_qr.toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900 text-right">
-                  {{ sale.monto_tarjeta.toFixed(2) }}
+                  {{ sale.tipo_venta === 'ENVIO' ? '-' : sale.monto_tarjeta.toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900 text-right">
-                  {{ (sale.monto_giftcard || 0).toFixed(2) }}
+                  {{ sale.tipo_venta === 'ENVIO' ? '-' : (sale.monto_giftcard || 0).toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900 text-right">
                   @if (sale.descuento && sale.descuento > 0) {
                   <div class="flex flex-col items-end gap-0.5">
-                    <span class="font-medium">{{ sale.descuento.toFixed(2) }}</span>
+                    <span class="font-medium">{{
+                      sale.tipo_venta === 'ENVIO' ? '-' : sale.descuento.toFixed(2)
+                    }}</span>
+                    @if (sale.tipo_venta !== 'ENVIO') {
                     <span
                       class="text-xs px-1.5 py-0.5 rounded"
                       [class.bg-blue-100]="sale.tipo_descuento === 'DESCUENTO'"
@@ -271,13 +275,16 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                     >
                       {{ sale.tipo_descuento }}
                     </span>
+                    }
                   </div>
                   } @else {
-                  <span class="text-gray-400">-</span>
+                  <span class="text-gray-400">{{
+                    sale.tipo_venta === 'ENVIO' ? '-' : '0.00'
+                  }}</span>
                   }
                 </td>
                 <td class="px-6 py-4 text-sm font-semibold text-gray-900 text-right">
-                  {{ sale.total.toFixed(2) }}
+                  {{ sale.tipo_venta === 'ENVIO' ? '-' : sale.total.toFixed(2) }}
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-900">
                   {{ sale.username || '-' }}
@@ -360,11 +367,11 @@ import { VentaDTO } from '../../../../core/models/venta.models';
                 <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
                   {{ totals().giftcard.toFixed(2) }}
                 </td>
-                <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right bg-gray-200">
-                  {{ totals().total.toFixed(2) }}
-                </td>
                 <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
                   {{ totals().descuento.toFixed(2) }}
+                </td>
+                <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right bg-gray-200">
+                  {{ totals().total.toFixed(2) }}
                 </td>
                 <td class="px-6 py-4"></td>
                 @if (isAdmin()) {
@@ -589,6 +596,7 @@ import { VentaDTO } from '../../../../core/models/venta.models';
 })
 export class SalesListComponent {
   private ventasService = inject(VentasService);
+  private ventasStore = inject(VentasStoreService);
   private sessionService = inject(SessionService);
   private toastService = inject(ToastService);
   private router = inject(Router);
@@ -619,20 +627,31 @@ export class SalesListComponent {
 
   totals = computed(() => {
     const salesList = this.sales();
+    // Filtrar solo ventas tipo LOCAL para los totales
+    const localSales = salesList.filter((sale) => sale.tipo_venta !== 'ENVIO');
     return {
-      efectivo: salesList.reduce((sum, sale) => sum + (sale.monto_efectivo || 0), 0),
-      qr: salesList.reduce((sum, sale) => sum + (sale.monto_qr || 0), 0),
-      tarjeta: salesList.reduce((sum, sale) => sum + (sale.monto_tarjeta || 0), 0),
-      giftcard: salesList.reduce((sum, sale) => sum + (sale.monto_giftcard || 0), 0),
-      total: salesList.reduce((sum, sale) => sum + (sale.total || 0), 0),
-      descuento: salesList.reduce((sum, sale) => sum + (sale.descuento || 0), 0),
+      efectivo: localSales.reduce((sum, sale) => sum + (sale.monto_efectivo || 0), 0),
+      qr: localSales.reduce((sum, sale) => sum + (sale.monto_qr || 0), 0),
+      tarjeta: localSales.reduce((sum, sale) => sum + (sale.monto_tarjeta || 0), 0),
+      giftcard: localSales.reduce((sum, sale) => sum + (sale.monto_giftcard || 0), 0),
+      total: localSales.reduce((sum, sale) => sum + (sale.total || 0), 0),
+      descuento: localSales.reduce((sum, sale) => sum + (sale.descuento || 0), 0),
     };
   });
 
   constructor() {
-    // Inicializar sucursal según el rol
-    if (!this.isAdmin()) {
-      this.selectedBranch.set(this.sessionService.sucursalId());
+    // Restaurar filtros guardados si existen
+    const savedFilters = this.ventasStore.getListFilters();
+    if (savedFilters) {
+      this.selectedDateStart.set(savedFilters.dateStart);
+      this.selectedDateEnd.set(savedFilters.dateEnd);
+      this.dateRangeMode.set(savedFilters.dateRangeMode);
+      this.selectedBranch.set(savedFilters.branch);
+    } else {
+      // Inicializar sucursal según el rol si no hay filtros guardados
+      if (!this.isAdmin()) {
+        this.selectedBranch.set(this.sessionService.sucursalId());
+      }
     }
 
     // Auto-cargar cuando cambien los filtros
@@ -767,12 +786,23 @@ export class SalesListComponent {
       next: (data) => {
         this.sales.set(data);
         this.loading.set(false);
+        // Guardar filtros actuales
+        this.saveCurrentFilters();
       },
       error: (err) => {
         console.error('Error cargando ventas:', err);
         this.sales.set([]);
         this.loading.set(false);
       },
+    });
+  }
+
+  private saveCurrentFilters(): void {
+    this.ventasStore.saveListFilters({
+      dateStart: this.selectedDateStart(),
+      dateEnd: this.selectedDateEnd(),
+      dateRangeMode: this.dateRangeMode(),
+      branch: this.selectedBranch(),
     });
   }
 

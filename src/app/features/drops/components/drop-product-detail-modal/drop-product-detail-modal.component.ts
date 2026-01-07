@@ -217,7 +217,10 @@ export class DropProductDetailModalComponent implements OnChanges {
   quantityInput = signal<number>(1);
 
   // Computed Signals
-  availableSizes = computed(() => this.selectedColor()?.tallas ?? []);
+  availableSizes = computed(() => {
+    const tallas = this.selectedColor()?.tallas ?? [];
+    return this.sortSizes(tallas);
+  });
 
   primaryImage = computed(() => {
     const color = this.selectedColor();
@@ -317,5 +320,28 @@ export class DropProductDetailModalComponent implements OnChanges {
 
   onCloseRequest(): void {
     this.closed.emit();
+  }
+
+  private sortSizes(tallas: TallaDropDetalle[]): TallaDropDetalle[] {
+    const ordenTallas = ['S', 'M', 'L', 'XL', '36', '38', '40', '42', '44', '46', '48'];
+
+    return [...tallas].sort((a, b) => {
+      const indexA = ordenTallas.indexOf(a.nombreTalla);
+      const indexB = ordenTallas.indexOf(b.nombreTalla);
+
+      // Si ambos están en la lista definida
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+
+      // Si solo A está en la lista, va primero
+      if (indexA !== -1) return -1;
+
+      // Si solo B está en la lista, va primero
+      if (indexB !== -1) return 1;
+
+      // Si ninguno está, orden alfanumérico natural
+      return a.nombreTalla.localeCompare(b.nombreTalla, undefined, { numeric: true });
+    });
   }
 }

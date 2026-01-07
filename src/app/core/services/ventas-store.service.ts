@@ -44,6 +44,14 @@ export class VentasStoreService {
   readonly isLoading = signal<boolean>(false);
   readonly processing = signal<boolean>(false); // Estado de procesamiento de venta
 
+  // Persistencia de filtros del listado
+  private listFilters = signal<{
+    dateStart: string;
+    dateEnd: string;
+    dateRangeMode: boolean;
+    branch: number | null;
+  } | null>(null);
+
   // --- Estado Derivado (Computed Signals) ---
   readonly totalVenta = computed(() =>
     this.cartItems().reduce((acc, item) => acc + item.subtotal, 0)
@@ -323,6 +331,37 @@ export class VentasStoreService {
 
   setTipoVenta(tipo: 'LOCAL' | 'ENVIO') {
     this.tipoVenta.set(tipo);
+  }
+
+  /**
+   * Guarda los filtros del listado
+   */
+  saveListFilters(filters: {
+    dateStart: string;
+    dateEnd: string;
+    dateRangeMode: boolean;
+    branch: number | null;
+  }): void {
+    this.listFilters.set(filters);
+  }
+
+  /**
+   * Obtiene los filtros guardados del listado
+   */
+  getListFilters(): {
+    dateStart: string;
+    dateEnd: string;
+    dateRangeMode: boolean;
+    branch: number | null;
+  } | null {
+    return this.listFilters();
+  }
+
+  /**
+   * Limpia los filtros guardados
+   */
+  clearListFilters(): void {
+    this.listFilters.set(null);
   }
 
   private getBranchName(id: number): string {

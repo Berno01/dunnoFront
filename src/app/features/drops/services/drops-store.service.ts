@@ -21,6 +21,14 @@ export class DropsStoreService {
   // Modo edición
   private editingDropId = signal<number | null>(null);
 
+  // Persistencia de filtros del listado
+  private listFilters = signal<{
+    dateStart: string;
+    dateEnd: string;
+    dateRangeMode: boolean;
+    branch: number | null;
+  } | null>(null);
+
   // Computed
   cartItems = computed(() => this.items());
   itemCount = computed(() => {
@@ -109,6 +117,37 @@ export class DropsStoreService {
    */
   isEditMode(): boolean {
     return this.editingDropId() !== null;
+  }
+
+  /**
+   * Guarda los filtros del listado
+   */
+  saveListFilters(filters: {
+    dateStart: string;
+    dateEnd: string;
+    dateRangeMode: boolean;
+    branch: number | null;
+  }): void {
+    this.listFilters.set(filters);
+  }
+
+  /**
+   * Obtiene los filtros guardados del listado
+   */
+  getListFilters(): {
+    dateStart: string;
+    dateEnd: string;
+    dateRangeMode: boolean;
+    branch: number | null;
+  } | null {
+    return this.listFilters();
+  }
+
+  /**
+   * Limpia los filtros guardados
+   */
+  clearListFilters(): void {
+    this.listFilters.set(null);
   }
 
   /**

@@ -14,6 +14,8 @@ export interface Drop {
   estado?: boolean; // true=activa, false=anulada
   detalles?: DetalleDrop[]; // Opcional: solo viene en getById, no en listado
   totalItems?: number; // Total calculado en backend (solo en listado)
+  marca?: string; // Marca del primer ítem (solo en listado)
+  categorias?: string[]; // Categorías únicas (solo en listado)
 }
 
 export interface DropRequest {

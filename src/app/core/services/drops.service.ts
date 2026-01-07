@@ -137,7 +137,9 @@ export class DropsService {
       fecha: drop.fecha,
       idSucursal: drop.idSucursal ?? drop.id_sucursal,
       estado: drop.estado ?? true,
-      totalItems: drop.totalItems ?? drop.total_items, // Viene del backend (solo en listado)
+      totalItems: drop.totalItems ?? drop.total_items,
+      marca: drop.marca,
+      categorias: drop.categorias ?? [],
       detalles: drop.detalles
         ? drop.detalles.map((detalle: any) => ({
             idDetalleRecepcion: detalle.idDetalleRecepcion ?? detalle.id_detalle_recepcion,
