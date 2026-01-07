@@ -205,10 +205,22 @@ import {
       <!-- Grid de Productos -->
       <main class="p-8">
         @if (loading()) {
-        <div class="flex items-center justify-center h-64">
-          <div
-            class="h-12 w-12 border-4 border-gray-300 border-t-black rounded-full animate-spin"
-          ></div>
+        <!-- Skeletons mientras cargan los datos -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+          @for (i of [1,2,3,4,5,6,7,8,9,10]; track i) {
+          <div class="bg-white overflow-hidden animate-pulse">
+            <!-- Skeleton imagen -->
+            <div class="aspect-[4/5] bg-gray-200"></div>
+            <!-- Skeleton info -->
+            <div class="p-3 space-y-2">
+              <div class="h-2 bg-gray-200 rounded w-1/3"></div>
+              <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+              <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div class="h-3 bg-gray-200 rounded w-1/4"></div>
+              <div class="h-6 bg-gray-200 rounded w-1/3 mt-2"></div>
+            </div>
+          </div>
+          }
         </div>
         } @else if (filteredModelos().length === 0) {
         <div class="flex flex-col items-center justify-center h-64 text-gray-400">

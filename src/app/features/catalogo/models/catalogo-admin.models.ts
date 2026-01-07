@@ -44,7 +44,7 @@ export interface ColorModeloDTO {
   id: number;
   fotoUrl: string;
   color: ColorDTO;
-  variantes: VarianteDTO[];
+  variantes?: VarianteDTO[]; // Opcional: solo viene en detalle, no en listado
 }
 
 export interface ModeloDTO {
@@ -62,7 +62,7 @@ export interface ApiColorModeloDTO {
   id: number;
   foto_url: string;
   color: ColorDTO;
-  variantes: VarianteDTO[];
+  variantes?: VarianteDTO[]; // Opcional: solo viene en detalle
 }
 
 export interface ApiModeloDTO {

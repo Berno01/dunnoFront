@@ -590,20 +590,10 @@ export class NuevoModeloModalComponent {
   opcionesUpdated = output<void>(); // Para notificar al padre que recargue opciones
 
   constructor() {
-    // Debug: Imprimir colores cada vez que cambien las opciones
-    effect(() => {
-      const colores = this.opciones().colores;
-      console.log('🎨 Colores recibidos en modal:', colores);
-      colores.forEach((color) => {
-        console.log(`  - ${color.nombre}: codigoHex=${color.codigoHex}`);
-      });
-    });
-
     // Cargar datos cuando se recibe un modeloId para editar
     effect(() => {
       const id = this.modeloId();
       if (id !== null) {
-        console.log('📝 Cargando modelo para editar, ID:', id);
         this.loadModeloForEdit(id);
       }
     });
@@ -616,14 +606,15 @@ export class NuevoModeloModalComponent {
     this.loading.set(true);
     this.catalogoService.getModeloById(id).subscribe({
       next: (modelo) => {
-        console.log('📦 Modelo cargado:', modelo);
-
         // Extraer IDs de tallas desde las variantes de los colores
         const tallasIds = new Set<number>();
         modelo.colores.forEach((colorModelo) => {
-          colorModelo.variantes.forEach((variante) => {
-            tallasIds.add(variante.talla.id);
-          });
+          // Validar que variantes existe (solo viene en detalle)
+          if (colorModelo.variantes) {
+            colorModelo.variantes.forEach((variante) => {
+              tallasIds.add(variante.talla.id);
+            });
+          }
         });
 
         // Preparar colores con sus fotos
