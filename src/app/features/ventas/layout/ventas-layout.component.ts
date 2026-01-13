@@ -112,7 +112,9 @@ import { CommonModule } from '@angular/common';
           (click)="$event.stopPropagation()"
         >
           <!-- Header Modal -->
-          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <div
+            class="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200"
+          >
             <h2 class="text-sm font-bold tracking-wider text-gray-900">
               CARRITO ({{ ventasStore.cantidadTotalArticulos() }})
             </h2>
@@ -143,8 +145,8 @@ import { CommonModule } from '@angular/common';
             </div>
           </div>
 
-          <!-- Contenido del Carrito -->
-          <div class="flex-1 overflow-hidden">
+          <!-- Contenido del Carrito con Scroll -->
+          <div class="flex-1 overflow-y-auto min-h-0">
             <app-cart-summary></app-cart-summary>
           </div>
         </div>

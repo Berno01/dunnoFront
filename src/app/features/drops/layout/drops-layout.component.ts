@@ -97,12 +97,12 @@ import { CommonModule } from '@angular/common';
           (click)="$event.stopPropagation()"
         >
           <!-- Handle -->
-          <div class="flex justify-center py-2">
+          <div class="flex-shrink-0 flex justify-center py-2">
             <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
           </div>
 
-          <!-- Contenido del Resumen -->
-          <div class="flex-1 overflow-hidden">
+          <!-- Contenido del Resumen con Scroll -->
+          <div class="flex-1 overflow-y-auto min-h-0">
             <app-drop-summary></app-drop-summary>
           </div>
         </div>

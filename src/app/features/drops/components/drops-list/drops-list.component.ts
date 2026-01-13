@@ -15,11 +15,12 @@ import { DropsStoreService } from '../../services/drops-store.service';
 import { SessionService } from '../../../../core/services/session.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { Drop } from '../../../../core/models/drops.models';
+import { DropDetailModalComponent } from '../drop-detail-modal/drop-detail-modal.component';
 
 @Component({
   selector: 'app-drops-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropDetailModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="h-[calc(100vh-5rem)] flex flex-col bg-white">
@@ -224,13 +225,12 @@ import { Drop } from '../../../../core/models/drops.models';
                 </td>
                 <td class="px-6 py-4 text-sm text-center">
                   <div class="flex items-center justify-center gap-2">
-                    @if (drop.estado !== false) {
-                    <!-- Botón Ver -->
+                    <!-- Botón Ver Detalles (visible para todos) -->
                     <button
                       type="button"
-                      class="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                      (click)="onViewDrop(drop)"
-                      title="Ver detalles"
+                      class="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
+                      (click)="onViewDetails(drop)"
+                      title="Ver Detalles"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -247,7 +247,24 @@ import { Drop } from '../../../../core/models/drops.models';
                         ></path>
                       </svg>
                     </button>
-                    <!-- Botón Anular -->
+                    @if (isAdmin()) { @if (drop.estado !== false) {
+                    <!-- Botón Editar (solo admin y drops activos) -->
+                    <button
+                      type="button"
+                      class="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      (click)="onEditDrop(drop)"
+                      title="Editar"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        ></path>
+                      </svg>
+                    </button>
+                    <!-- Botón Anular (solo admin y drops activos) -->
                     <button
                       type="button"
                       class="p-2 text-gray-400 hover:text-red-600 transition-colors"
@@ -263,7 +280,7 @@ import { Drop } from '../../../../core/models/drops.models';
                         ></path>
                       </svg>
                     </button>
-                    }
+                    } }
                   </div>
                 </td>
               </tr>
@@ -320,30 +337,79 @@ import { Drop } from '../../../../core/models/drops.models';
             </div>
 
             <!-- Acciones -->
-            @if (drop.estado !== false) {
-            <div class="flex gap-2">
+            <div class="space-y-2">
+              <!-- Botón Ver Detalles (visible para todos) -->
               <button
                 type="button"
-                class="flex-1 px-3 py-2 border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                (click)="onViewDrop(drop)"
+                class="w-full px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1.5"
+                (click)="onViewDetails(drop)"
               >
-                Ver Detalles
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  ></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  ></path>
+                </svg>
+                VER DETALLES
               </button>
-              <button
-                type="button"
-                class="px-3 py-2 border border-red-300 text-xs font-medium text-red-600 hover:bg-red-50"
-                (click)="onDeleteDrop(drop)"
-              >
-                Anular
-              </button>
+
+              @if (isAdmin() && drop.estado !== false) {
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  class="flex-1 px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5"
+                  (click)="onEditDrop(drop)"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    ></path>
+                  </svg>
+                  EDITAR
+                </button>
+                <button
+                  type="button"
+                  class="flex-1 px-3 py-2 border-2 border-red-600 text-red-600 text-xs font-semibold rounded hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5"
+                  (click)="onDeleteDrop(drop)"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    ></path>
+                  </svg>
+                  ANULAR
+                </button>
+              </div>
+              }
             </div>
-            }
           </div>
           }
         </div>
         }
       </div>
     </div>
+
+    <!-- Modal de Detalles -->
+    @if (showDetailModal() && selectedDropId()) {
+    <app-drop-detail-modal
+      [dropId]="selectedDropId()!"
+      (closed)="onCloseDetailModal()"
+    ></app-drop-detail-modal>
+    }
   `,
 })
 export class DropsListComponent {
@@ -361,6 +427,8 @@ export class DropsListComponent {
   selectedDateEnd = signal<string>(this.getTodayString());
   dateRangeMode = signal<boolean>(false);
   selectedBranch = signal<number | null>(null);
+  showDetailModal = signal<boolean>(false);
+  selectedDropId = signal<number | null>(null);
 
   // Computed
   isAdmin = computed(() => this.sessionService.rol() === 'ADMIN');
@@ -491,9 +559,20 @@ export class DropsListComponent {
     this.router.navigate(['/drops/nueva']);
   }
 
-  onViewDrop(drop: Drop): void {
+  onViewDetails(drop: Drop): void {
+    if (!drop.idRecepcion) return;
+    this.selectedDropId.set(drop.idRecepcion);
+    this.showDetailModal.set(true);
+  }
+
+  onEditDrop(drop: Drop): void {
     if (!drop.idRecepcion) return;
     this.router.navigate(['/drops/editar', drop.idRecepcion]);
+  }
+
+  onCloseDetailModal(): void {
+    this.showDetailModal.set(false);
+    this.selectedDropId.set(null);
   }
 
   onDeleteDrop(drop: Drop): void {

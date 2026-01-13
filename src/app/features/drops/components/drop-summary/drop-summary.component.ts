@@ -23,7 +23,9 @@ import { take } from 'rxjs/operators';
   template: `
     <div class="h-full flex flex-col bg-gray-50">
       <!-- Header (Solo visible en desktop) -->
-      <div class="hidden lg:flex px-3 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-white">
+      <div
+        class="hidden lg:flex flex-shrink-0 px-3 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-white"
+      >
         <div class="flex items-center justify-between w-full">
           <h2
             class="text-xs md:text-sm font-bold tracking-[0.15em] md:tracking-[0.2em] text-gray-900"
@@ -43,7 +45,7 @@ import { take } from 'rxjs/operators';
       </div>
 
       <!-- Items List -->
-      <div class="flex-1 overflow-y-auto px-3 md:px-6 py-3 md:py-4">
+      <div class="flex-1 overflow-y-auto px-3 md:px-6 py-3 md:py-4 min-h-0">
         @if (itemCount() === 0) {
         <div class="flex flex-col items-center justify-center h-full text-gray-400">
           <svg
@@ -111,7 +113,7 @@ import { take } from 'rxjs/operators';
       <!-- Footer con Datos y Botón Guardar -->
       @if (itemCount() > 0) {
       <div
-        class="border-t border-gray-200 bg-white px-3 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4"
+        class="flex-shrink-0 border-t border-gray-200 bg-white px-3 md:px-6 py-3 md:py-4 space-y-3 md:space-y-4"
       >
         <!-- Total de Items -->
         <div class="flex items-center justify-between text-xs md:text-sm">

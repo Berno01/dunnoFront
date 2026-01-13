@@ -24,7 +24,9 @@ import { take } from 'rxjs/operators';
   template: `
     <div class="h-full flex flex-col bg-gray-50">
       <!-- Header (Compact & Enhanced) -->
-      <div class="hidden lg:flex flex-col px-4 py-3 border-b border-gray-200 bg-white gap-2">
+      <div
+        class="hidden lg:flex flex-col px-4 py-3 border-b border-gray-200 bg-white gap-2 flex-shrink-0"
+      >
         <div class="flex items-center justify-between w-full">
           <h2
             class="text-xs md:text-sm font-bold tracking-[0.15em] md:tracking-[0.2em] text-gray-900"
@@ -86,7 +88,7 @@ import { take } from 'rxjs/operators';
       </div>
 
       <!-- Cart Items List -->
-      <div class="flex-1 overflow-y-auto px-3 md:px-6 py-3 md:py-4">
+      <div class="flex-1 overflow-y-auto px-3 md:px-6 py-3 md:py-4 min-h-0">
         @if (itemCount() === 0) {
         <div class="flex flex-col items-center justify-center h-full text-gray-400">
           <svg
@@ -158,7 +160,7 @@ import { take } from 'rxjs/operators';
       <!-- Footer (Compact) -->
       @if (itemCount() > 0) {
       <div
-        class="border-t border-gray-200 bg-white px-4 py-3 space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]"
+        class="flex-shrink-0 border-t border-gray-200 bg-white px-4 py-3 space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]"
       >
         <!-- Totals -->
         <div class="space-y-1.5 pb-2 border-b border-gray-100">
