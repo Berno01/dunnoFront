@@ -226,6 +226,20 @@ export class DropDetailModalComponent {
       return;
     }
 
+    // Mostrar datos básicos inmediatamente (sin esperar al catálogo)
+    const detallesBasicos = detalles.map((d) => ({
+      idVariante: d.idVariante,
+      idModelo: d.idModelo || 0,
+      cantidad: d.cantidad,
+      nombreModelo: 'Cargando...',
+      nombreMarca: '-',
+      nombreColor: '-',
+      nombreTalla: '-',
+      fotoUrl: '',
+    }));
+    this.detallesEnriquecidos.set(detallesBasicos);
+    this.loading.set(false); // Ocultar spinner principal
+
     // Obtener IDs de modelo únicos
     const modelosUnicos = new Set<number>();
     detalles.forEach((detalle) => {
@@ -235,7 +249,7 @@ export class DropDetailModalComponent {
     });
 
     if (modelosUnicos.size === 0) {
-      // Si no hay idModelo, mostrar sin enriquecer
+      // Si no hay idModelo, actualizar a "N/A"
       const fallback = detalles.map((d) => ({
         idVariante: d.idVariante,
         idModelo: d.idModelo || 0,
@@ -247,94 +261,73 @@ export class DropDetailModalComponent {
         fotoUrl: '',
       }));
       this.detallesEnriquecidos.set(fallback);
-      this.loading.set(false);
       return;
     }
 
-    // Consultar catálogo para cada modelo único (en paralelo)
-    const catalogRequests = Array.from(modelosUnicos).map((idModelo) =>
+    // Crear mapa para ir acumulando resultados
+    const catalogMap = new Map<number, any>();
+
+    // Lanzar todas las peticiones en paralelo pero procesar cada una conforme llega
+    Array.from(modelosUnicos).forEach((idModelo) => {
       this.dropsService.getDetalleModelo(idModelo).pipe(
-        map((detalle) => ({ idModelo, detalle })),
         catchError((err) => {
           console.error(`Error al cargar modelo ${idModelo}:`, err);
           return of(null);
         })
-      )
-    );
+      ).subscribe({
+        next: (detalle) => {
+          if (detalle) {
+            catalogMap.set(idModelo, detalle);
+            
+            // Actualizar inmediatamente los items que corresponden a este modelo
+            const enriquecidos = detalles.map((detalleDrop) => {
+              if (!detalleDrop.idModelo) {
+                return {
+                  idVariante: detalleDrop.idVariante,
+                  idModelo: 0,
+                  cantidad: detalleDrop.cantidad,
+                  nombreModelo: 'N/A',
+                  nombreMarca: 'N/A',
+                  nombreColor: 'N/A',
+                  nombreTalla: 'N/A',
+                  fotoUrl: '',
+                };
+              }
 
-    forkJoin(catalogRequests).subscribe({
-      next: (catalogResults) => {
-        // Crear mapa idModelo -> ModeloDetalleDrop
-        const catalogMap = new Map<number, any>();
-        catalogResults.forEach((result) => {
-          if (result) {
-            catalogMap.set(result.idModelo, result.detalle);
+              const productDetail = catalogMap.get(detalleDrop.idModelo);
+              if (!productDetail) {
+                // Aún no ha llegado el catálogo de este modelo
+                return {
+                  idVariante: detalleDrop.idVariante,
+                  idModelo: detalleDrop.idModelo,
+                  cantidad: detalleDrop.cantidad,
+                  nombreModelo: 'Cargando...',
+                  nombreMarca: '-',
+                  nombreColor: '-',
+                  nombreTalla: '-',
+                  fotoUrl: '',
+                };
+              }
+
+              // Buscar la variante en el árbol de colores/tallas
+              const varianteData = this.findVarianteInCatalog(productDetail, detalleDrop.idVariante);
+
+              return {
+                idVariante: detalleDrop.idVariante,
+                idModelo: detalleDrop.idModelo,
+                cantidad: detalleDrop.cantidad,
+                nombreModelo: productDetail.nombreModelo,
+                nombreMarca: productDetail.nombreMarca,
+                nombreColor: varianteData?.color.nombreColor || 'N/A',
+                nombreTalla: varianteData?.talla.nombreTalla || 'N/A',
+                fotoUrl: varianteData?.color.fotoUrl || '',
+              };
+            });
+
+            this.detallesEnriquecidos.set(enriquecidos);
           }
-        });
-
-        // Enriquecer detalles con información del catálogo
-        const enriquecidos = detalles.map((detalle) => {
-          if (!detalle.idModelo) {
-            return {
-              idVariante: detalle.idVariante,
-              idModelo: 0,
-              cantidad: detalle.cantidad,
-              nombreModelo: 'N/A',
-              nombreMarca: 'N/A',
-              nombreColor: 'N/A',
-              nombreTalla: 'N/A',
-              fotoUrl: '',
-            };
-          }
-
-          const productDetail = catalogMap.get(detalle.idModelo);
-          if (!productDetail) {
-            return {
-              idVariante: detalle.idVariante,
-              idModelo: detalle.idModelo,
-              cantidad: detalle.cantidad,
-              nombreModelo: 'Producto',
-              nombreMarca: 'N/A',
-              nombreColor: 'N/A',
-              nombreTalla: 'N/A',
-              fotoUrl: '',
-            };
-          }
-
-          // Buscar la variante en el árbol de colores/tallas
-          const varianteData = this.findVarianteInCatalog(productDetail, detalle.idVariante);
-
-          return {
-            idVariante: detalle.idVariante,
-            idModelo: detalle.idModelo,
-            cantidad: detalle.cantidad,
-            nombreModelo: productDetail.nombreModelo,
-            nombreMarca: productDetail.nombreMarca,
-            nombreColor: varianteData?.color.nombreColor || 'N/A',
-            nombreTalla: varianteData?.talla.nombreTalla || 'N/A',
-            fotoUrl: varianteData?.color.fotoUrl || '',
-          };
-        });
-
-        this.detallesEnriquecidos.set(enriquecidos);
-        this.loading.set(false);
-      },
-      error: (err: any) => {
-        console.error('Error enriqueciendo detalles:', err);
-        // Mostrar detalles sin enriquecer
-        const fallback = detalles.map((d) => ({
-          idVariante: d.idVariante,
-          idModelo: d.idModelo || 0,
-          cantidad: d.cantidad,
-          nombreModelo: 'Producto',
-          nombreMarca: 'N/A',
-          nombreColor: 'N/A',
-          nombreTalla: 'N/A',
-          fotoUrl: '',
-        }));
-        this.detallesEnriquecidos.set(fallback);
-        this.loading.set(false);
-      },
+        }
+      });
     });
   }
 
