@@ -269,65 +269,71 @@ export class DropDetailModalComponent {
 
     // Lanzar todas las peticiones en paralelo pero procesar cada una conforme llega
     Array.from(modelosUnicos).forEach((idModelo) => {
-      this.dropsService.getDetalleModelo(idModelo).pipe(
-        catchError((err) => {
-          console.error(`Error al cargar modelo ${idModelo}:`, err);
-          return of(null);
-        })
-      ).subscribe({
-        next: (detalle) => {
-          if (detalle) {
-            catalogMap.set(idModelo, detalle);
-            
-            // Actualizar inmediatamente los items que corresponden a este modelo
-            const enriquecidos = detalles.map((detalleDrop) => {
-              if (!detalleDrop.idModelo) {
-                return {
-                  idVariante: detalleDrop.idVariante,
-                  idModelo: 0,
-                  cantidad: detalleDrop.cantidad,
-                  nombreModelo: 'N/A',
-                  nombreMarca: 'N/A',
-                  nombreColor: 'N/A',
-                  nombreTalla: 'N/A',
-                  fotoUrl: '',
-                };
-              }
+      this.dropsService
+        .getDetalleModelo(idModelo)
+        .pipe(
+          catchError((err) => {
+            console.error(`Error al cargar modelo ${idModelo}:`, err);
+            return of(null);
+          })
+        )
+        .subscribe({
+          next: (detalle) => {
+            if (detalle) {
+              catalogMap.set(idModelo, detalle);
 
-              const productDetail = catalogMap.get(detalleDrop.idModelo);
-              if (!productDetail) {
-                // Aún no ha llegado el catálogo de este modelo
+              // Actualizar inmediatamente los items que corresponden a este modelo
+              const enriquecidos = detalles.map((detalleDrop) => {
+                if (!detalleDrop.idModelo) {
+                  return {
+                    idVariante: detalleDrop.idVariante,
+                    idModelo: 0,
+                    cantidad: detalleDrop.cantidad,
+                    nombreModelo: 'N/A',
+                    nombreMarca: 'N/A',
+                    nombreColor: 'N/A',
+                    nombreTalla: 'N/A',
+                    fotoUrl: '',
+                  };
+                }
+
+                const productDetail = catalogMap.get(detalleDrop.idModelo);
+                if (!productDetail) {
+                  // Aún no ha llegado el catálogo de este modelo
+                  return {
+                    idVariante: detalleDrop.idVariante,
+                    idModelo: detalleDrop.idModelo,
+                    cantidad: detalleDrop.cantidad,
+                    nombreModelo: 'Cargando...',
+                    nombreMarca: '-',
+                    nombreColor: '-',
+                    nombreTalla: '-',
+                    fotoUrl: '',
+                  };
+                }
+
+                // Buscar la variante en el árbol de colores/tallas
+                const varianteData = this.findVarianteInCatalog(
+                  productDetail,
+                  detalleDrop.idVariante
+                );
+
                 return {
                   idVariante: detalleDrop.idVariante,
                   idModelo: detalleDrop.idModelo,
                   cantidad: detalleDrop.cantidad,
-                  nombreModelo: 'Cargando...',
-                  nombreMarca: '-',
-                  nombreColor: '-',
-                  nombreTalla: '-',
-                  fotoUrl: '',
+                  nombreModelo: productDetail.nombreModelo,
+                  nombreMarca: productDetail.nombreMarca,
+                  nombreColor: varianteData?.color.nombreColor || 'N/A',
+                  nombreTalla: varianteData?.talla.nombreTalla || 'N/A',
+                  fotoUrl: varianteData?.color.fotoUrl || '',
                 };
-              }
+              });
 
-              // Buscar la variante en el árbol de colores/tallas
-              const varianteData = this.findVarianteInCatalog(productDetail, detalleDrop.idVariante);
-
-              return {
-                idVariante: detalleDrop.idVariante,
-                idModelo: detalleDrop.idModelo,
-                cantidad: detalleDrop.cantidad,
-                nombreModelo: productDetail.nombreModelo,
-                nombreMarca: productDetail.nombreMarca,
-                nombreColor: varianteData?.color.nombreColor || 'N/A',
-                nombreTalla: varianteData?.talla.nombreTalla || 'N/A',
-                fotoUrl: varianteData?.color.fotoUrl || '',
-              };
-            });
-
-            this.detallesEnriquecidos.set(enriquecidos);
-          }
-        }
-      });
+              this.detallesEnriquecidos.set(enriquecidos);
+            }
+          },
+        });
     });
   }
 

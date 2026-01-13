@@ -348,62 +348,68 @@ export class SaleDetailModalComponent {
 
     // Lanzar todas las peticiones en paralelo pero procesar cada una conforme llega
     Array.from(modelosUnicos).forEach((idModelo) => {
-      this.catalogService.getProductDetail(idModelo, venta.id_sucursal).pipe(
-        catchError((err) => {
-          console.error(`Error al cargar modelo ${idModelo}:`, err);
-          return of(null);
-        })
-      ).subscribe({
-        next: (detalle) => {
-          if (detalle) {
-            catalogMap.set(idModelo, detalle);
-            
-            // Actualizar inmediatamente los items que corresponden a este modelo
-            const enriquecidos = detalles.map((detalleVenta) => {
-              if (!detalleVenta.id_modelo) {
-                return {
-                  ...detalleVenta,
-                  id_modelo: 0,
-                  nombreModelo: 'N/A',
-                  nombreMarca: 'N/A',
-                  nombreColor: 'N/A',
-                  nombreTalla: 'N/A',
-                  fotoUrl: '',
-                };
-              }
+      this.catalogService
+        .getProductDetail(idModelo, venta.id_sucursal)
+        .pipe(
+          catchError((err) => {
+            console.error(`Error al cargar modelo ${idModelo}:`, err);
+            return of(null);
+          })
+        )
+        .subscribe({
+          next: (detalle) => {
+            if (detalle) {
+              catalogMap.set(idModelo, detalle);
 
-              const productDetail = catalogMap.get(detalleVenta.id_modelo);
-              if (!productDetail) {
-                // Aún no ha llegado el catálogo de este modelo
+              // Actualizar inmediatamente los items que corresponden a este modelo
+              const enriquecidos = detalles.map((detalleVenta) => {
+                if (!detalleVenta.id_modelo) {
+                  return {
+                    ...detalleVenta,
+                    id_modelo: 0,
+                    nombreModelo: 'N/A',
+                    nombreMarca: 'N/A',
+                    nombreColor: 'N/A',
+                    nombreTalla: 'N/A',
+                    fotoUrl: '',
+                  };
+                }
+
+                const productDetail = catalogMap.get(detalleVenta.id_modelo);
+                if (!productDetail) {
+                  // Aún no ha llegado el catálogo de este modelo
+                  return {
+                    ...detalleVenta,
+                    id_modelo: detalleVenta.id_modelo,
+                    nombreModelo: 'Cargando...',
+                    nombreMarca: '-',
+                    nombreColor: '-',
+                    nombreTalla: '-',
+                    fotoUrl: '',
+                  };
+                }
+
+                // Buscar la variante en el árbol de colores/tallas
+                const varianteData = this.findVarianteInCatalog(
+                  productDetail,
+                  detalleVenta.id_variante
+                );
+
                 return {
                   ...detalleVenta,
                   id_modelo: detalleVenta.id_modelo,
-                  nombreModelo: 'Cargando...',
-                  nombreMarca: '-',
-                  nombreColor: '-',
-                  nombreTalla: '-',
-                  fotoUrl: '',
+                  nombreModelo: productDetail.nombreModelo,
+                  nombreMarca: productDetail.nombreMarca,
+                  nombreColor: varianteData?.color.nombreColor || 'N/A',
+                  nombreTalla: varianteData?.talla.nombreTalla || 'N/A',
+                  fotoUrl: varianteData?.color.fotoUrl || '',
                 };
-              }
+              });
 
-              // Buscar la variante en el árbol de colores/tallas
-              const varianteData = this.findVarianteInCatalog(productDetail, detalleVenta.id_variante);
-
-              return {
-                ...detalleVenta,
-                id_modelo: detalleVenta.id_modelo,
-                nombreModelo: productDetail.nombreModelo,
-                nombreMarca: productDetail.nombreMarca,
-                nombreColor: varianteData?.color.nombreColor || 'N/A',
-                nombreTalla: varianteData?.talla.nombreTalla || 'N/A',
-                fotoUrl: varianteData?.color.fotoUrl || '',
-              };
-            });
-
-            this.detallesEnriquecidos.set(enriquecidos);
-          }
-        }
-      });
+              this.detallesEnriquecidos.set(enriquecidos);
+            }
+          },
+        });
     });
   }
 
