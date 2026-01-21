@@ -14,8 +14,6 @@ import { InventarioItem } from '../../../../core/models/inventario.models';
 import { InventarioMatrizComponent } from '../inventario-matriz/inventario-matriz.component';
 import { take } from 'rxjs/operators';
 
-type CategoriaFiltro = 'Todas' | 'Poleras' | 'Pantalones' | 'Shorts' | 'Hoodies';
-
 @Component({
   selector: 'app-inventario-list',
   standalone: true,
@@ -50,7 +48,7 @@ type CategoriaFiltro = 'Todas' | 'Poleras' | 'Pantalones' | 'Shorts' | 'Hoodies'
 
             <!-- Pills de Categoría -->
             <div class="flex flex-wrap gap-2">
-              @for (cat of categorias; track cat) {
+              @for (cat of categoriasDisponibles(); track cat) {
               <button
                 type="button"
                 class="px-4 py-2 text-xs md:text-sm font-semibold tracking-wider transition-all"
@@ -302,15 +300,18 @@ export class InventarioListComponent implements OnInit {
   inventario = signal<InventarioItem[]>([]);
   loading = signal<boolean>(true);
   searchTerm = signal<string>('');
-  categoriaSeleccionada = signal<CategoriaFiltro>('Todas');
+  categoriaSeleccionada = signal<string>('Todas');
   marcaSeleccionada = signal<string>('');
   corteSeleccionado = signal<string>('');
   expandedIds = signal<Set<number>>(new Set());
 
-  // Constantes
-  categorias: CategoriaFiltro[] = ['Todas', 'Poleras', 'Pantalones', 'Shorts', 'Hoodies'];
-
   // Computed
+  categoriasDisponibles = computed(() => {
+    const categorias = this.inventario().map((i) => i.categoria);
+    const categoriasUnicas = Array.from(new Set(categorias)).sort();
+    return ['Todas', ...categoriasUnicas];
+  });
+
   marcasDisponibles = computed(() => {
     const marcas = this.inventario().map((i) => i.marca);
     return Array.from(new Set(marcas)).sort();
@@ -335,19 +336,7 @@ export class InventarioListComponent implements OnInit {
     // Filtro de categoría
     const cat = this.categoriaSeleccionada();
     if (cat !== 'Todas') {
-      items = items.filter((i) => {
-        const itemCat = i.categoria.toLowerCase();
-        const filterCat = cat.toLowerCase();
-
-        // Manejo de plurales/singulares
-        if (filterCat === 'pantalones') return itemCat.includes('pantal');
-        if (filterCat === 'poleras') return itemCat.includes('polera');
-        if (filterCat === 'shorts') return itemCat.includes('short');
-        if (filterCat === 'hoodies')
-          return itemCat.includes('hoodie') || itemCat.includes('hoddie');
-
-        return itemCat === filterCat;
-      });
+      items = items.filter((i) => i.categoria === cat);
     }
 
     // Filtro de marca
@@ -396,7 +385,7 @@ export class InventarioListComponent implements OnInit {
     this.searchTerm.set('');
   }
 
-  selectCategoria(cat: CategoriaFiltro): void {
+  selectCategoria(cat: string): void {
     this.categoriaSeleccionada.set(cat);
   }
 

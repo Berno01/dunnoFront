@@ -24,9 +24,7 @@ import { take } from 'rxjs/operators';
   template: `
     <div class="h-full flex flex-col bg-gray-50">
       <!-- Header (Compact & Enhanced) -->
-      <div
-        class="flex flex-col px-4 py-3 border-b border-gray-200 bg-white gap-2 flex-shrink-0"
-      >
+      <div class="flex flex-col px-4 py-3 border-b border-gray-200 bg-white gap-2 flex-shrink-0">
         <div class="hidden lg:flex items-center justify-between w-full">
           <h2
             class="text-xs md:text-sm font-bold tracking-[0.15em] md:tracking-[0.2em] text-gray-900"
