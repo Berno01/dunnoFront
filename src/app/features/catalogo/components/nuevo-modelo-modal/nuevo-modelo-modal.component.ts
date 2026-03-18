@@ -1173,6 +1173,10 @@ export class NuevoModeloModalComponent {
 
   // Guardar modelo
   onSave() {
+    if (this.saving()) {
+      return;
+    }
+
     if (!this.isFormValid()) return;
 
     this.saving.set(true);
@@ -1224,7 +1228,7 @@ export class NuevoModeloModalComponent {
         error: (err) => {
           this.saving.set(false);
           console.error('Error al subir imágenes a Cloudinary:', err);
-          this.toastService.error('Error al subir las imágenes', 4000);
+          this.toastService.error(this.getUploadErrorMessage(err), 5000);
         },
       });
     } else {
@@ -1280,6 +1284,27 @@ export class NuevoModeloModalComponent {
 
   onClose() {
     this.closed.emit();
+  }
+
+  private getUploadErrorMessage(err: unknown): string {
+    const cloudinaryMessage = (err as any)?.error?.error?.message || (err as any)?.error?.message;
+    if (typeof cloudinaryMessage === 'string' && cloudinaryMessage.trim() !== '') {
+      return cloudinaryMessage;
+    }
+
+    if (err instanceof Error && err.message.trim() !== '') {
+      return err.message;
+    }
+
+    const status = (err as any)?.status;
+    const statusText = (err as any)?.statusText;
+    if (status !== undefined) {
+      const normalizedStatusText =
+        typeof statusText === 'string' && statusText.trim() !== '' ? statusText : 'Unknown Error';
+      return `Error al subir imágenes (status: ${status} ${normalizedStatusText}).`;
+    }
+
+    return 'Error al subir imágenes. Verifica tu conexión y la configuración de Cloudinary.';
   }
 
   onBackdropClick(event: MouseEvent) {
