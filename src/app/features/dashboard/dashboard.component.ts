@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { forkJoin } from 'rxjs';
+import ExcelJS from 'exceljs';
 import { DashboardService } from './services/dashboard.service';
 import { SessionService } from '../../core/services/session.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -14,6 +15,7 @@ import {
   DistribucionTalla,
   TopProducto,
   DashboardFilters,
+  VentaExportRow,
 } from './models/dashboard.models';
 
 import {
@@ -65,6 +67,7 @@ export class DashboardComponent implements OnInit {
 
   // State
   isLoading = signal<boolean>(true);
+  isExporting = signal<boolean>(false);
 
   // Data Signals
   kpis = signal<DashboardKPIs | null>(null);
@@ -310,5 +313,244 @@ export class DashboardComponent implements OnInit {
   getSucursalName(id: number): string {
     const sucursales: { [key: number]: string } = { 1: 'Tarija', 2: 'Cochabamba', 3: 'Santa Cruz' };
     return sucursales[id] || 'Desconocida';
+  }
+
+  exportarExcel() {
+    this.isExporting.set(true);
+
+    const filters: DashboardFilters = {};
+    if (this.selectedSucursal() !== null) {
+      filters.idSucursal = this.selectedSucursal()!;
+    }
+    filters.fechaInicio = this.customStartDate();
+    filters.fechaFin = this.customEndDate();
+
+    this.dashboardService.getVentasExport(filters).subscribe({
+      next: async (rows) => {
+        if (!rows || rows.length === 0) {
+          alert('No hay datos para exportar en el rango seleccionado.');
+          this.isExporting.set(false);
+          return;
+        }
+        try {
+          await this.generarExcel(rows);
+        } catch (err) {
+          console.error('Error generando Excel', err);
+          alert('Ocurrio un error al generar el archivo Excel.');
+        }
+        this.isExporting.set(false);
+      },
+      error: (err) => {
+        console.error('Error exportando ventas', err);
+        alert('Error al obtener los datos del servidor.');
+        this.isExporting.set(false);
+      },
+    });
+  }
+
+  private async generarExcel(rows: VentaExportRow[]) {
+    const workbook = new ExcelJS.Workbook();
+
+    const sucursalMap = new Map<number, { nombre: string; rows: VentaExportRow[] }>();
+    rows.forEach((row) => {
+      if (!sucursalMap.has(row.id_sucursal)) {
+        sucursalMap.set(row.id_sucursal, { nombre: row.nombre_sucursal, rows: [] });
+      }
+      sucursalMap.get(row.id_sucursal)!.rows.push(row);
+    });
+
+    const headerFont = { bold: true, color: { argb: 'FF000000' } };
+    const headerFill = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFE0E0E0' } };
+    const thinBorder = {
+      top: { style: 'thin' as const },
+      left: { style: 'thin' as const },
+      bottom: { style: 'thin' as const },
+      right: { style: 'thin' as const },
+    };
+    const summaryFont = { bold: true };
+    const summaryFill = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFFFF3CD' } };
+    const grandFont = { bold: true, color: { argb: 'FFFFFFFF' } };
+    const grandFill = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FF333333' } };
+    const grandBorder = {
+      top: { style: 'medium' as const },
+      left: { style: 'thin' as const },
+      bottom: { style: 'medium' as const },
+      right: { style: 'thin' as const },
+    };
+    const colWidths = [18, 8, 28, 18, 15, 15, 14, 14, 14, 12, 14, 14, 14, 14];
+    const headers = [
+      'Fecha y Hora', 'Cant', 'Modelo', 'Categoria', 'Marca', 'Corte',
+      'P. Unit. (Bs)', 'Subtotal (Bs)',
+      'Efectivo (Bs)', 'QR (Bs)', 'Tarjeta (Bs)', 'Giftcard (Bs)', 'Descuento (Bs)', 'Total Venta (Bs)',
+    ];
+
+    sucursalMap.forEach((sucData) => {
+      const sheet = workbook.addWorksheet(sucData.nombre.substring(0, 31));
+
+      colWidths.forEach((w, i) => {
+        sheet.getColumn(i + 1).width = w;
+      });
+
+      const headerRow = sheet.addRow(headers);
+      headerRow.eachCell((cell) => {
+        cell.font = headerFont;
+        cell.fill = headerFill;
+        cell.border = thinBorder;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      });
+
+      const dayMap = new Map<string, VentaExportRow[]>();
+      sucData.rows.forEach((row) => {
+        const date = new Date(row.fecha_venta);
+        const key = [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, '0'),
+          String(date.getDate()).padStart(2, '0'),
+        ].join('-');
+        if (!dayMap.has(key)) dayMap.set(key, []);
+        dayMap.get(key)!.push(row);
+      });
+
+      let grandUnidades = 0;
+      let grandSubtotal = 0;
+      let grandEfectivo = 0;
+      let grandQr = 0;
+      let grandTarjeta = 0;
+      let grandGiftcard = 0;
+      let grandDescuento = 0;
+      let grandTotal = 0;
+
+      const sortedDays = Array.from(dayMap.keys()).sort();
+
+      sortedDays.forEach((dayKey) => {
+        const dayRows = dayMap.get(dayKey)!;
+
+        const categoriesInDay = new Set(dayRows.map((r) => r.categoria));
+        let sorted: VentaExportRow[];
+        if (categoriesInDay.size > 1) {
+          sorted = [...dayRows].sort((a, b) => {
+            const catCmp = a.categoria.localeCompare(b.categoria);
+            if (catCmp !== 0) return catCmp;
+            return new Date(a.fecha_venta).getTime() - new Date(b.fecha_venta).getTime();
+          });
+        } else {
+          sorted = [...dayRows].sort(
+            (a, b) => new Date(a.fecha_venta).getTime() - new Date(b.fecha_venta).getTime()
+          );
+        }
+
+        sorted.forEach((row) => {
+          const date = new Date(row.fecha_venta);
+          const dateStr = [
+            String(date.getDate()).padStart(2, '0'),
+            String(date.getMonth() + 1).padStart(2, '0'),
+            date.getFullYear(),
+          ].join('/') + ' ' + [
+            String(date.getHours()).padStart(2, '0'),
+            String(date.getMinutes()).padStart(2, '0'),
+          ].join(':');
+
+          sheet.addRow([
+            dateStr,
+            row.cantidad,
+            row.nombre_modelo,
+            row.categoria,
+            row.marca,
+            row.corte,
+            row.precio_unitario,
+            row.total_detalle,
+            '', '', '', '', '', '',
+          ]);
+        });
+
+        const totalUnidades = sorted.reduce((s, r) => s + r.cantidad, 0);
+        const totalSubtotal = sorted.reduce((s, r) => s + r.total_detalle, 0);
+
+        const ventasUnicas = new Set<number>();
+        let efecDia = 0,
+          qrDia = 0,
+          tarjDia = 0,
+          giftDia = 0,
+          descDia = 0,
+          totalDia = 0;
+        sorted.forEach((r) => {
+          if (!ventasUnicas.has(r.id_venta)) {
+            ventasUnicas.add(r.id_venta);
+            efecDia += r.monto_efectivo;
+            qrDia += r.monto_qr;
+            tarjDia += r.monto_tarjeta;
+            giftDia += r.monto_giftcard;
+            descDia += r.descuento;
+            totalDia += r.total_venta;
+          }
+        });
+
+        const summaryRow = sheet.addRow([
+          'TOTAL DIA ' + dayKey.split('-').reverse().join('/'),
+          totalUnidades,
+          '', '', '', '',
+          '',
+          totalSubtotal,
+          efecDia,
+          qrDia,
+          tarjDia,
+          giftDia,
+          descDia,
+          totalDia,
+        ]);
+        summaryRow.eachCell((cell) => {
+          cell.font = summaryFont;
+          cell.fill = summaryFill;
+          cell.border = thinBorder;
+        });
+
+        sheet.addRow([]);
+
+        grandUnidades += totalUnidades;
+        grandSubtotal += totalSubtotal;
+        grandEfectivo += efecDia;
+        grandQr += qrDia;
+        grandTarjeta += tarjDia;
+        grandGiftcard += giftDia;
+        grandDescuento += descDia;
+        grandTotal += totalDia;
+      });
+
+      const grandRow = sheet.addRow([
+        'GRAN TOTAL',
+        grandUnidades,
+        '', '', '', '',
+        '',
+        grandSubtotal,
+        grandEfectivo,
+        grandQr,
+        grandTarjeta,
+        grandGiftcard,
+        grandDescuento,
+        grandTotal,
+      ]);
+      grandRow.eachCell((cell) => {
+        cell.font = grandFont;
+        cell.fill = grandFill;
+        cell.border = grandBorder;
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const hoy = new Date();
+    const fechaFile = [
+      hoy.getFullYear(),
+      String(hoy.getMonth() + 1).padStart(2, '0'),
+      String(hoy.getDate()).padStart(2, '0'),
+    ].join('-');
+    a.href = url;
+    a.download = 'ventas_export_' + fechaFile + '.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

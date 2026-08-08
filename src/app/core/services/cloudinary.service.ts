@@ -103,7 +103,7 @@ export class CloudinaryService {
    */
   uploadImage(file: File, folderName: string): Observable<string> {
     return from(this.performUpload(file, folderName)).pipe(
-      map((data: CloudinaryResponse) => data.secure_url)
+      map((data: CloudinaryResponse) => data.secure_url),
     );
   }
 
@@ -117,7 +117,7 @@ export class CloudinaryService {
     const uploadPromises = files.map((file) => this.performUpload(file, folderName));
 
     return from(Promise.all(uploadPromises)).pipe(
-      map((responses: CloudinaryResponse[]) => responses.map((res) => res.secure_url))
+      map((responses: CloudinaryResponse[]) => responses.map((res) => res.secure_url)),
     );
   }
 }

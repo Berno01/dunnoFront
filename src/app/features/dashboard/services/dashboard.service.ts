@@ -10,6 +10,7 @@ import {
   DistribucionTalla,
   TopProducto,
   DashboardFilters,
+  VentaExportRow,
 } from '../models/dashboard.models';
 
 @Injectable({
@@ -72,6 +73,13 @@ export class DashboardService {
 
   getTopProductos(filters?: DashboardFilters): Observable<TopProducto[]> {
     return this.http.get<TopProducto[]>(`${this.apiUrl}/top-productos`, {
+      headers: this.getHeaders(),
+      params: this.getParams(filters),
+    });
+  }
+
+  getVentasExport(filters?: DashboardFilters): Observable<VentaExportRow[]> {
+    return this.http.get<VentaExportRow[]>(`${this.apiUrl}/exportar-ventas`, {
       headers: this.getHeaders(),
       params: this.getParams(filters),
     });

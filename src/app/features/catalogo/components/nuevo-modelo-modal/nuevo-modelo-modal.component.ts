@@ -56,48 +56,493 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
         </button>
 
         @if (loading()) {
-        <div class="w-full h-full flex flex-col items-center justify-center bg-white z-20">
-          <div class="h-12 w-12 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
-          <p class="text-gray-500 font-medium tracking-wider text-sm">CARGANDO MODELO...</p>
-        </div>
+          <div class="w-full h-full flex flex-col items-center justify-center bg-white z-20">
+            <div
+              class="h-12 w-12 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"
+            ></div>
+            <p class="text-gray-500 font-medium tracking-wider text-sm">CARGANDO MODELO...</p>
+          </div>
         } @else {
-        <!-- Columna Izquierda: Uploader de Foto -->
-        <div class="w-full md:w-1/2 bg-gray-50 p-6 md:p-12 flex flex-col order-1 md:order-1">
-          <div class="flex-1 flex flex-col justify-center items-center">
-            <!-- Área de Preview Grande -->
-            @if (activeColorPreview()) {
-            <div class="w-48 md:w-64 aspect-[3/4] bg-white border-2 border-gray-200 mb-4 md:mb-6 overflow-hidden relative group">
-              <img [src]="activeColorPreview()!" alt="Preview" class="w-full h-full object-cover" />
-              
-              <!-- Botón eliminar foto (aparece al hover) -->
+          <!-- Columna Izquierda: Uploader de Foto -->
+          <div class="w-full md:w-1/2 bg-gray-50 p-6 md:p-12 flex flex-col order-1 md:order-1">
+            <div class="flex-1 flex flex-col justify-center items-center">
+              <!-- Área de Preview Grande -->
+              @if (activeColorPreview()) {
+                <div
+                  class="w-48 md:w-64 aspect-[3/4] bg-white border-2 border-gray-200 mb-4 md:mb-6 overflow-hidden relative group"
+                >
+                  <img
+                    [src]="activeColorPreview()!"
+                    alt="Preview"
+                    class="w-full h-full object-cover"
+                  />
+
+                  <!-- Botón eliminar foto (aparece al hover) -->
+                  <button
+                    type="button"
+                    class="absolute top-4 right-4 bg-red-500 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-600 hover:scale-110 shadow-lg"
+                    (click)="removeActivePhoto()"
+                    title="Eliminar foto"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+              } @else {
+                <!-- Drag & Drop Area -->
+                <div
+                  class="w-48 md:w-64 aspect-[3/4] border-2 border-dashed border-gray-300 flex flex-col items-center justify-center mb-4 md:mb-6 cursor-pointer hover:border-black transition-colors relative"
+                  [class.border-black]="isDragging()"
+                  (click)="fileInput.click()"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="onDragLeave($event)"
+                  (drop)="onDrop($event)"
+                >
+                  <svg
+                    class="w-12 h-12 md:w-16 md:h-16 text-gray-300 mb-3 md:mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    ></path>
+                  </svg>
+                  <p
+                    class="text-xs md:text-sm font-bold text-gray-400 mb-2 tracking-wider text-center px-2"
+                  >
+                    ARRASTRA PARA GUARDAR TU FOTO
+                  </p>
+                  <p class="text-xs text-gray-300">JPG, PNG, WEBP (MAX 10MB)</p>
+
+                  @if (activeColorName()) {
+                    <div class="absolute bottom-4 left-0 right-0 text-center">
+                      <p class="text-xs text-gray-500">
+                        Subiendo foto para:
+                        <span class="font-bold text-black">{{ activeColorName() }}</span>
+                      </p>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Input oculto para seleccionar archivo -->
+              <input
+                #fileInput
+                type="file"
+                class="hidden"
+                accept="image/jpeg,image/png,image/webp"
+                (change)="onFileSelected($event)"
+              />
+
+              <!-- Miniaturas de Colores (Navegación entre fotos) -->
+              <div class="flex gap-2 md:gap-3 flex-wrap justify-center">
+                @for (colorDraft of formDraft().coloresDraft; track colorDraft.idColor) {
+                  <button
+                    class="relative w-12 h-12 md:w-16 md:h-16 rounded border-2 transition-all duration-300 ease-out"
+                    [class.border-black]="formDraft().activeColorIdForUpload === colorDraft.idColor"
+                    [class.border-gray-200]="
+                      formDraft().activeColorIdForUpload !== colorDraft.idColor
+                    "
+                    [class.scale-125]="formDraft().activeColorIdForUpload === colorDraft.idColor"
+                    [class.shadow-xl]="formDraft().activeColorIdForUpload === colorDraft.idColor"
+                    [class.ring-4]="formDraft().activeColorIdForUpload === colorDraft.idColor"
+                    [class.ring-black/20]="
+                      formDraft().activeColorIdForUpload === colorDraft.idColor
+                    "
+                    [class.z-10]="formDraft().activeColorIdForUpload === colorDraft.idColor"
+                    (click)="setActiveColorForUpload(colorDraft.idColor)"
+                    [title]="
+                      colorDraft.nombreColor +
+                      (colorDraft.previewUrl ? ' - Foto cargada' : ' - Sin foto')
+                    "
+                  >
+                    @if (colorDraft.previewUrl) {
+                      <img
+                        [src]="colorDraft.previewUrl"
+                        alt="Preview"
+                        class="w-full h-full object-cover"
+                      />
+                      <!-- Badge checkmark en fotos existentes -->
+                      <div
+                        class="absolute -top-1 -right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-md"
+                      >
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fill-rule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clip-rule="evenodd"
+                          ></path>
+                        </svg>
+                      </div>
+                    } @else {
+                      <div
+                        class="w-full h-full"
+                        [style.background-color]="colorDraft.codigoHex"
+                      ></div>
+                    }
+                  </button>
+                }
+              </div>
+
+              <!-- Indicador del color activo -->
+              @if (activeColorName()) {
+                <div class="mt-6 text-center animate-fade-in">
+                  <p class="text-xs text-gray-400 tracking-wider">COLOR SELECCIONADO</p>
+                  <p class="text-lg font-bold text-black mt-1">{{ activeColorName() }}</p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Formulario -->
+          <div class="w-full md:w-1/2 p-6 md:p-12 overflow-y-auto order-2 md:order-2">
+            <h1
+              class="text-2xl md:text-4xl font-serif mb-6 md:mb-8"
+              style="font-family: 'Playfair Display', serif"
+            >
+              {{ modeloId() !== null ? 'EDITAR MODELO' : 'NUEVO MODELO' }}
+            </h1>
+
+            <form class="space-y-4 md:space-y-6">
+              <!-- Nombre del Modelo -->
+              <div>
+                <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
+                  NOMBRE DEL MODELO
+                </label>
+                <input
+                  type="text"
+                  class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm transition-colors"
+                  placeholder="Ingresa el nombre"
+                  [(ngModel)]="formDraft().nombreModelo"
+                  name="nombreModelo"
+                />
+              </div>
+
+              <!-- Precio -->
+              <div>
+                <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
+                  PRECIO (Bs.)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm transition-colors"
+                  placeholder="0.00"
+                  [(ngModel)]="formDraft().precio"
+                  name="precio"
+                />
+              </div>
+
+              <!-- Marca -->
+              <div>
+                <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
+                  MARCA
+                </label>
+                <div class="flex gap-2 items-center">
+                  <select
+                    class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm bg-transparent transition-colors"
+                    [ngModel]="formDraft().idMarca"
+                    (ngModelChange)="onMarcaSelected($event)"
+                    name="idMarca"
+                  >
+                    <option [ngValue]="null" disabled>SELECCIONA UNA MARCA</option>
+                    <option [ngValue]="'CREATE_NEW'" class="font-bold">
+                      + CREAR NUEVA MARCA...
+                    </option>
+                    @for (marca of opciones().marcas; track marca.id) {
+                      <option [ngValue]="marca.id">{{ marca.nombre }}</option>
+                    }
+                  </select>
+                  @if (isValidId(formDraft().idMarca)) {
+                    <button
+                      type="button"
+                      class="text-gray-400 hover:text-black p-1"
+                      (click)="onEditMarca(formDraft().idMarca!)"
+                      title="Editar marca"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                        ></path>
+                      </svg>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Categoría -->
+              <div>
+                <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
+                  CATEGORÍA
+                </label>
+                <div class="flex gap-2 items-center">
+                  <select
+                    class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm bg-transparent transition-colors"
+                    [ngModel]="formDraft().idCategoria"
+                    (ngModelChange)="onCategoriaSelected($event)"
+                    name="idCategoria"
+                  >
+                    <option [ngValue]="null" disabled>SELECCIONA UNA CATEGORÍA</option>
+                    <option [ngValue]="'CREATE_NEW'" class="font-bold">
+                      + CREAR NUEVA CATEGORÍA...
+                    </option>
+                    @for (cat of opciones().categorias; track cat.id) {
+                      <option [ngValue]="cat.id">{{ cat.nombre }}</option>
+                    }
+                  </select>
+                  @if (isValidId(formDraft().idCategoria)) {
+                    <button
+                      type="button"
+                      class="text-gray-400 hover:text-black p-1"
+                      (click)="onEditCategoria(formDraft().idCategoria!)"
+                      title="Editar categoría"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                        ></path>
+                      </svg>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Corte / Fit -->
+              <div>
+                <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-3">
+                  CORTE / FIT
+                </label>
+                <div class="flex gap-3 items-center flex-wrap">
+                  @for (corte of opciones().cortes; track corte.id) {
+                    <div class="relative group">
+                      <button
+                        type="button"
+                        class="px-6 py-2 text-xs font-bold tracking-wider transition-all"
+                        [class.bg-black]="formDraft().idCorte === corte.id"
+                        [class.text-white]="formDraft().idCorte === corte.id"
+                        [class.bg-white]="formDraft().idCorte !== corte.id"
+                        [class.text-black]="formDraft().idCorte !== corte.id"
+                        [class.border]="formDraft().idCorte !== corte.id"
+                        [class.border-gray-300]="formDraft().idCorte !== corte.id"
+                        (click)="selectCorte(corte.id)"
+                      >
+                        {{ corte.nombre.toUpperCase() }}
+                      </button>
+                      <button
+                        type="button"
+                        class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-black z-10"
+                        (click)="$event.stopPropagation(); onEditCorte(corte.id)"
+                        title="Editar corte"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          ></path>
+                        </svg>
+                      </button>
+                    </div>
+                  }
+
+                  <!-- Botón + para crear nuevo corte -->
+                  <button
+                    type="button"
+                    class="w-12 h-12 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-black hover:text-black transition-all"
+                    (click)="openMiniModalCorte()"
+                    title="Crear nuevo corte"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Colores Disponibles -->
+              <div>
+                <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-3">
+                  COLORES DISPONIBLES
+                </label>
+                <div class="flex gap-3 items-center flex-wrap">
+                  @for (color of opciones().colores; track color.id) {
+                    <div class="relative group">
+                      <button
+                        type="button"
+                        class="w-10 h-10 rounded-full border-4 transition-all relative"
+                        [style.background-color]="color.codigoHex"
+                        [class.border-black]="isColorSelected(color.id)"
+                        [class.border-transparent]="!isColorSelected(color.id)"
+                        (click)="toggleColor(color)"
+                        [title]="color.nombre + ' (' + color.codigoHex + ')'"
+                      >
+                        @if (isColorSelected(color.id)) {
+                          <svg
+                            class="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow-md"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fill-rule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clip-rule="evenodd"
+                            ></path>
+                          </svg>
+                        }
+                      </button>
+                      <button
+                        type="button"
+                        class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-black z-10"
+                        (click)="$event.stopPropagation(); onEditColor(color.id)"
+                        title="Editar color"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          ></path>
+                        </svg>
+                      </button>
+                    </div>
+                  }
+
+                  <!-- Botón + para agregar color -->
+                  <button
+                    type="button"
+                    class="w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-black hover:text-black transition-all"
+                    (click)="onCreateColor()"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tallas Disponibles -->
+              <div>
+                <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-3">
+                  TALLAS DISPONIBLES
+                </label>
+                <div class="flex gap-3 items-center flex-wrap">
+                  @for (talla of opciones().tallas; track talla.id) {
+                    <div class="relative group">
+                      <button
+                        type="button"
+                        class="w-12 h-12 text-sm font-bold transition-all"
+                        [class.bg-black]="isTallaSelected(talla.id)"
+                        [class.text-white]="isTallaSelected(talla.id)"
+                        [class.bg-white]="!isTallaSelected(talla.id)"
+                        [class.text-black]="!isTallaSelected(talla.id)"
+                        [class.border]="!isTallaSelected(talla.id)"
+                        [class.border-gray-300]="!isTallaSelected(talla.id)"
+                        (click)="toggleTalla(talla.id)"
+                      >
+                        {{ talla.nombre }}
+                      </button>
+                      <button
+                        type="button"
+                        class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-black z-10"
+                        (click)="$event.stopPropagation(); onEditTalla(talla.id)"
+                        title="Editar talla"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          ></path>
+                        </svg>
+                      </button>
+                    </div>
+                  }
+
+                  <!-- Botón + para agregar talla -->
+                  <button
+                    type="button"
+                    class="w-12 h-12 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-black hover:text-black transition-all"
+                    (click)="onCreateTalla()"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <!-- Botones de Acción -->
+            <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-gray-100">
               <button
                 type="button"
-                class="absolute top-4 right-4 bg-red-500 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-600 hover:scale-110 shadow-lg"
-                (click)="removeActivePhoto()"
-                title="Eliminar foto"
+                class="px-8 py-3 text-sm font-medium text-gray-600 hover:text-black transition-colors tracking-wider"
+                (click)="onClose()"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  ></path>
-                </svg>
+                CANCELAR
+              </button>
+              <button
+                type="button"
+                class="px-8 py-3 bg-black text-white text-sm font-bold tracking-wider hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                [disabled]="!isFormValid() || saving()"
+                (click)="onSave()"
+              >
+                {{ saving() ? 'GUARDANDO...' : 'GUARDAR MODELO' }}
               </button>
             </div>
-            } @else {
-            <!-- Drag & Drop Area -->
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar color con foto -->
+    @if (showConfirmDeleteModal()) {
+      <div
+        class="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+        (click)="closeConfirmDeleteModal()"
+      >
+        <div class="bg-white p-10 max-w-md shadow-2xl" (click)="$event.stopPropagation()">
+          <div class="text-center mb-6">
             <div
-              class="w-48 md:w-64 aspect-[3/4] border-2 border-dashed border-gray-300 flex flex-col items-center justify-center mb-4 md:mb-6 cursor-pointer hover:border-black transition-colors relative"
-              [class.border-black]="isDragging()"
-              (click)="fileInput.click()"
-              (dragover)="onDragOver($event)"
-              (dragleave)="onDragLeave($event)"
-              (drop)="onDrop($event)"
+              class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4"
             >
               <svg
-                class="w-12 h-12 md:w-16 md:h-16 text-gray-300 mb-3 md:mb-4"
+                class="w-8 h-8 text-red-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -105,473 +550,120 @@ import { ColorDraftDTO, FormDraftState } from '../../models/create-modelo.models
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                 ></path>
               </svg>
-              <p class="text-xs md:text-sm font-bold text-gray-400 mb-2 tracking-wider text-center px-2">
-                ARRASTRA PARA GUARDAR TU FOTO
-              </p>
-              <p class="text-xs text-gray-300">JPG, PNG, WEBP (MAX 10MB)</p>
-
-              @if (activeColorName()) {
-              <div class="absolute bottom-4 left-0 right-0 text-center">
-                <p class="text-xs text-gray-500">
-                  Subiendo foto para:
-                  <span class="font-bold text-black">{{ activeColorName() }}</span>
-                </p>
-              </div>
-              }
             </div>
-            }
+            <h3 class="text-2xl font-serif mb-3" style="font-family: 'Playfair Display', serif">
+              ¿Eliminar foto?
+            </h3>
 
-            <!-- Input oculto para seleccionar archivo -->
-            <input
-              #fileInput
-              type="file"
-              class="hidden"
-              accept="image/jpeg,image/png,image/webp"
-              (change)="onFileSelected($event)"
-            />
-
-            <!-- Miniaturas de Colores (Navegación entre fotos) -->
-            <div class="flex gap-2 md:gap-3 flex-wrap justify-center">
-              @for (colorDraft of formDraft().coloresDraft; track colorDraft.idColor) {
-              <button
-                class="relative w-12 h-12 md:w-16 md:h-16 rounded border-2 transition-all duration-300 ease-out"
-                [class.border-black]="formDraft().activeColorIdForUpload === colorDraft.idColor"
-                [class.border-gray-200]="formDraft().activeColorIdForUpload !== colorDraft.idColor"
-                [class.scale-125]="formDraft().activeColorIdForUpload === colorDraft.idColor"
-                [class.shadow-xl]="formDraft().activeColorIdForUpload === colorDraft.idColor"
-                [class.ring-4]="formDraft().activeColorIdForUpload === colorDraft.idColor"
-                [class.ring-black/20]="formDraft().activeColorIdForUpload === colorDraft.idColor"
-                [class.z-10]="formDraft().activeColorIdForUpload === colorDraft.idColor"
-                (click)="setActiveColorForUpload(colorDraft.idColor)"
-                [title]="colorDraft.nombreColor + (colorDraft.previewUrl ? ' - Foto cargada' : ' - Sin foto')"
-              >
-                @if (colorDraft.previewUrl) {
-                <img
-                  [src]="colorDraft.previewUrl"
-                  alt="Preview"
-                  class="w-full h-full object-cover"
-                />
-                <!-- Badge checkmark en fotos existentes -->
-                <div class="absolute -top-1 -right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-md">
-                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                  </svg>
+            <!-- Preview de la foto y color a eliminar -->
+            @if (colorToDelete()) {
+              <div class="mb-4 flex justify-center">
+                <div class="relative">
+                  <img
+                    [src]="getColorPreviewUrl(colorToDelete()!.id)"
+                    alt="Preview"
+                    class="w-32 h-40 object-cover border-2 border-gray-200 rounded"
+                  />
+                  <div
+                    class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-white shadow-lg"
+                    [style.background-color]="colorToDelete()!.codigoHex"
+                  ></div>
                 </div>
-                } @else {
-                <div class="w-full h-full" [style.background-color]="colorDraft.codigoHex"></div>
-                }
-              </button>
-              }
-            </div>
-
-            <!-- Indicador del color activo -->
-            @if (activeColorName()) {
-            <div class="mt-6 text-center animate-fade-in">
-              <p class="text-xs text-gray-400 tracking-wider">COLOR SELECCIONADO</p>
-              <p class="text-lg font-bold text-black mt-1">{{ activeColorName() }}</p>
-            </div>
+              </div>
             }
+
+            <p class="text-gray-600 text-sm leading-relaxed">
+              El color
+              <span class="font-bold text-black">"{{ colorToDelete()?.nombre }}"</span> tiene una
+              foto cargada.
+              <br />
+              ¿Estás seguro de eliminar este color y su foto?
+            </p>
           </div>
-        </div>
 
-        <!-- Columna Derecha: Formulario -->
-        <div class="w-full md:w-1/2 p-6 md:p-12 overflow-y-auto order-2 md:order-2">
-          <h1 class="text-2xl md:text-4xl font-serif mb-6 md:mb-8" style="font-family: 'Playfair Display', serif">
-            {{ modeloId() !== null ? 'EDITAR MODELO' : 'NUEVO MODELO' }}
-          </h1>
-
-          <form class="space-y-4 md:space-y-6">
-            <!-- Nombre del Modelo -->
-            <div>
-              <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
-                NOMBRE DEL MODELO
-              </label>
-              <input
-                type="text"
-                class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm transition-colors"
-                placeholder="Ingresa el nombre"
-                [(ngModel)]="formDraft().nombreModelo"
-                name="nombreModelo"
-              />
-            </div>
-
-            <!-- Precio -->
-            <div>
-              <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
-                PRECIO (Bs.)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm transition-colors"
-                placeholder="0.00"
-                [(ngModel)]="formDraft().precio"
-                name="precio"
-              />
-            </div>
-
-            <!-- Marca -->
-            <div>
-              <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
-                MARCA
-              </label>
-              <div class="flex gap-2 items-center">
-                <select
-                  class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm bg-transparent transition-colors"
-                  [ngModel]="formDraft().idMarca"
-                  (ngModelChange)="onMarcaSelected($event)"
-                  name="idMarca"
-                >
-                  <option [ngValue]="null" disabled>SELECCIONA UNA MARCA</option>
-                  <option [ngValue]="'CREATE_NEW'" class="font-bold">+ CREAR NUEVA MARCA...</option>
-                  @for (marca of opciones().marcas; track marca.id) {
-                  <option [ngValue]="marca.id">{{ marca.nombre }}</option>
-                  }
-                </select>
-                @if (isValidId(formDraft().idMarca)) {
-                  <button type="button" class="text-gray-400 hover:text-black p-1" (click)="onEditMarca(formDraft().idMarca!)" title="Editar marca">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- Categoría -->
-            <div>
-              <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-2">
-                CATEGORÍA
-              </label>
-              <div class="flex gap-2 items-center">
-                <select
-                  class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm bg-transparent transition-colors"
-                  [ngModel]="formDraft().idCategoria"
-                  (ngModelChange)="onCategoriaSelected($event)"
-                  name="idCategoria"
-                >
-                  <option [ngValue]="null" disabled>SELECCIONA UNA CATEGORÍA</option>
-                  <option [ngValue]="'CREATE_NEW'" class="font-bold">+ CREAR NUEVA CATEGORÍA...</option>
-                  @for (cat of opciones().categorias; track cat.id) {
-                  <option [ngValue]="cat.id">{{ cat.nombre }}</option>
-                  }
-                </select>
-                @if (isValidId(formDraft().idCategoria)) {
-                  <button type="button" class="text-gray-400 hover:text-black p-1" (click)="onEditCategoria(formDraft().idCategoria!)" title="Editar categoría">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- Corte / Fit -->
-            <div>
-              <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-3">
-                CORTE / FIT
-              </label>
-              <div class="flex gap-3 items-center flex-wrap">
-                @for (corte of opciones().cortes; track corte.id) {
-                <div class="relative group">
-                  <button
-                    type="button"
-                    class="px-6 py-2 text-xs font-bold tracking-wider transition-all"
-                    [class.bg-black]="formDraft().idCorte === corte.id"
-                    [class.text-white]="formDraft().idCorte === corte.id"
-                    [class.bg-white]="formDraft().idCorte !== corte.id"
-                    [class.text-black]="formDraft().idCorte !== corte.id"
-                    [class.border]="formDraft().idCorte !== corte.id"
-                    [class.border-gray-300]="formDraft().idCorte !== corte.id"
-                    (click)="selectCorte(corte.id)"
-                  >
-                    {{ corte.nombre.toUpperCase() }}
-                  </button>
-                  <button
-                    type="button"
-                    class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-black z-10"
-                    (click)="$event.stopPropagation(); onEditCorte(corte.id)"
-                    title="Editar corte"
-                  >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                  </button>
-                </div>
-                }
-
-                <!-- Botón + para crear nuevo corte -->
-                <button
-                  type="button"
-                  class="w-12 h-12 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-black hover:text-black transition-all"
-                  (click)="openMiniModalCorte()"
-                  title="Crear nuevo corte"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Colores Disponibles -->
-            <div>
-              <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-3">
-                COLORES DISPONIBLES
-              </label>
-              <div class="flex gap-3 items-center flex-wrap">
-                @for (color of opciones().colores; track color.id) {
-                <div class="relative group">
-                  <button
-                    type="button"
-                    class="w-10 h-10 rounded-full border-4 transition-all relative"
-                    [style.background-color]="color.codigoHex"
-                    [class.border-black]="isColorSelected(color.id)"
-                    [class.border-transparent]="!isColorSelected(color.id)"
-                    (click)="toggleColor(color)"
-                    [title]="color.nombre + ' (' + color.codigoHex + ')'"
-                  >
-                    @if (isColorSelected(color.id)) {
-                    <svg
-                      class="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow-md"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clip-rule="evenodd"
-                      ></path>
-                    </svg>
-                    }
-                  </button>
-                  <button
-                    type="button"
-                    class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-black z-10"
-                    (click)="$event.stopPropagation(); onEditColor(color.id)"
-                    title="Editar color"
-                  >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                  </button>
-                </div>
-                }
-
-                <!-- Botón + para agregar color -->
-                <button
-                  type="button"
-                  class="w-10 h-10 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-black hover:text-black transition-all"
-                  (click)="onCreateColor()"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Tallas Disponibles -->
-            <div>
-              <label class="block text-xs font-semibold tracking-[0.15em] text-gray-400 mb-3">
-                TALLAS DISPONIBLES
-              </label>
-              <div class="flex gap-3 items-center flex-wrap">
-                @for (talla of opciones().tallas; track talla.id) {
-                <div class="relative group">
-                  <button
-                    type="button"
-                    class="w-12 h-12 text-sm font-bold transition-all"
-                    [class.bg-black]="isTallaSelected(talla.id)"
-                    [class.text-white]="isTallaSelected(talla.id)"
-                    [class.bg-white]="!isTallaSelected(talla.id)"
-                    [class.text-black]="!isTallaSelected(talla.id)"
-                    [class.border]="!isTallaSelected(talla.id)"
-                    [class.border-gray-300]="!isTallaSelected(talla.id)"
-                    (click)="toggleTalla(talla.id)"
-                  >
-                    {{ talla.nombre }}
-                  </button>
-                  <button
-                    type="button"
-                    class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-black z-10"
-                    (click)="$event.stopPropagation(); onEditTalla(talla.id)"
-                    title="Editar talla"
-                  >
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                  </button>
-                </div>
-                }
-
-                <!-- Botón + para agregar talla -->
-                <button
-                  type="button"
-                  class="w-12 h-12 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:border-black hover:text-black transition-all"
-                  (click)="onCreateTalla()"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </form>
-
-          <!-- Botones de Acción -->
-          <div class="flex justify-end gap-4 mt-12 pt-6 border-t border-gray-100">
+          <div class="flex gap-3">
             <button
               type="button"
-              class="px-8 py-3 text-sm font-medium text-gray-600 hover:text-black transition-colors tracking-wider"
-              (click)="onClose()"
+              class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 text-sm font-medium hover:border-black hover:text-black transition-colors"
+              (click)="cancelDeleteColorWithPhoto()"
             >
-              CANCELAR
+              NO, MANTENER
             </button>
             <button
               type="button"
-              class="px-8 py-3 bg-black text-white text-sm font-bold tracking-wider hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              [disabled]="!isFormValid() || saving()"
-              (click)="onSave()"
+              class="flex-1 px-6 py-3 bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors"
+              (click)="confirmDeleteColorWithPhoto()"
             >
-              {{ saving() ? 'GUARDANDO...' : 'GUARDAR MODELO' }}
+              SÍ, ELIMINAR
             </button>
           </div>
         </div>
-        }
       </div>
-    </div>
-
-    <!-- Modal de confirmación para eliminar color con foto -->
-    @if (showConfirmDeleteModal()) {
-    <div
-      class="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      (click)="closeConfirmDeleteModal()"
-    >
-      <div class="bg-white p-10 max-w-md shadow-2xl" (click)="$event.stopPropagation()">
-        <div class="text-center mb-6">
-          <div class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-          </div>
-          <h3 class="text-2xl font-serif mb-3" style="font-family: 'Playfair Display', serif">
-            ¿Eliminar foto?
-          </h3>
-          
-          <!-- Preview de la foto y color a eliminar -->
-          @if (colorToDelete()) {
-          <div class="mb-4 flex justify-center">
-            <div class="relative">
-              <img 
-                [src]="getColorPreviewUrl(colorToDelete()!.id)" 
-                alt="Preview" 
-                class="w-32 h-40 object-cover border-2 border-gray-200 rounded"
-              />
-              <div 
-                class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-white shadow-lg"
-                [style.background-color]="colorToDelete()!.codigoHex"
-              ></div>
-            </div>
-          </div>
-          }
-          
-          <p class="text-gray-600 text-sm leading-relaxed">
-            El color <span class="font-bold text-black">"{{ colorToDelete()?.nombre }}"</span> tiene una foto cargada.
-            <br>
-            ¿Estás seguro de eliminar este color y su foto?
-          </p>
-        </div>
-
-        <div class="flex gap-3">
-          <button
-            type="button"
-            class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 text-sm font-medium hover:border-black hover:text-black transition-colors"
-            (click)="cancelDeleteColorWithPhoto()"
-          >
-            NO, MANTENER
-          </button>
-          <button
-            type="button"
-            class="flex-1 px-6 py-3 bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors"
-            (click)="confirmDeleteColorWithPhoto()"
-          >
-            SÍ, ELIMINAR
-          </button>
-        </div>
-      </div>
-    </div>
     }
 
     <!-- Mini-Modal para crear nueva opción -->
     @if (showMiniModal()) {
-    <div
-      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
-      (click)="closeMiniModal()"
-    >
-      <div class="bg-white p-8 w-96 shadow-2xl" (click)="$event.stopPropagation()">
-        <h3 class="text-xl font-serif mb-6" style="font-family: 'Playfair Display', serif">
-          {{ miniModalTitle() }}
-        </h3>
+      <div
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70"
+        (click)="closeMiniModal()"
+      >
+        <div class="bg-white p-8 w-96 shadow-2xl" (click)="$event.stopPropagation()">
+          <h3 class="text-xl font-serif mb-6" style="font-family: 'Playfair Display', serif">
+            {{ miniModalTitle() }}
+          </h3>
 
-        <!-- Input para nombre -->
-        <input
-          type="text"
-          class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm mb-6"
-          [placeholder]="miniModalPlaceholder()"
-          [(ngModel)]="miniModalValue"
-          (keyup.enter)="saveMiniModal()"
-        />
+          <!-- Input para nombre -->
+          <input
+            type="text"
+            class="w-full border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm mb-6"
+            [placeholder]="miniModalPlaceholder()"
+            [(ngModel)]="miniModalValue"
+            (keyup.enter)="saveMiniModal()"
+          />
 
-        <!-- Selector de color (solo visible cuando es tipo 'color') -->
-        @if (miniModalType() === 'color') {
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>
-          <div class="flex items-center gap-3">
-            <input
-              type="color"
-              class="h-12 w-20 rounded border border-gray-300 cursor-pointer"
-              [(ngModel)]="miniModalColorHex"
-            />
-            <input
-              type="text"
-              class="flex-1 border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm font-mono"
-              placeholder="#000000"
-              [(ngModel)]="miniModalColorHex"
-              maxlength="7"
-            />
+          <!-- Selector de color (solo visible cuando es tipo 'color') -->
+          @if (miniModalType() === 'color') {
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Color</label>
+              <div class="flex items-center gap-3">
+                <input
+                  type="color"
+                  class="h-12 w-20 rounded border border-gray-300 cursor-pointer"
+                  [(ngModel)]="miniModalColorHex"
+                />
+                <input
+                  type="text"
+                  class="flex-1 border-b-2 border-gray-200 focus:border-black outline-none py-2 text-sm font-mono"
+                  placeholder="#000000"
+                  [(ngModel)]="miniModalColorHex"
+                  maxlength="7"
+                />
+              </div>
+            </div>
+          }
+
+          <div class="flex justify-end gap-3">
+            <button
+              type="button"
+              class="px-6 py-2 text-sm text-gray-600 hover:text-black transition-colors"
+              (click)="closeMiniModal()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="px-6 py-2 bg-black text-white text-sm font-bold hover:bg-gray-800 transition-colors"
+              (click)="saveMiniModal()"
+            >
+              Guardar
+            </button>
           </div>
         </div>
-        }
-
-        <div class="flex justify-end gap-3">
-          <button
-            type="button"
-            class="px-6 py-2 text-sm text-gray-600 hover:text-black transition-colors"
-            (click)="closeMiniModal()"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            class="px-6 py-2 bg-black text-white text-sm font-bold hover:bg-gray-800 transition-colors"
-            (click)="saveMiniModal()"
-          >
-            Guardar
-          </button>
-        </div>
       </div>
-    </div>
     }
   `,
 })
@@ -798,7 +890,7 @@ export class NuevoModeloModalComponent {
 
       // Si no tiene foto o ya está deseleccionado, toggle normal
       const updated = draft.coloresDraft.map((c) =>
-        c.idColor === color.id ? { ...c, isSelected: !c.isSelected } : c
+        c.idColor === color.id ? { ...c, isSelected: !c.isSelected } : c,
       );
       this.formDraft.update((d) => ({ ...d, coloresDraft: updated }));
 
@@ -1187,10 +1279,10 @@ export class NuevoModeloModalComponent {
 
     // Separar colores en dos grupos: los que necesitan subir foto nueva y los que ya tienen foto en Cloudinary
     const coloresConFotoNueva = draft.coloresDraft.filter(
-      (c) => c.isSelected && c.photoFile !== null
+      (c) => c.isSelected && c.photoFile !== null,
     );
     const coloresConFotoExistente = draft.coloresDraft.filter(
-      (c) => c.isSelected && c.photoFile === null && c.previewUrl
+      (c) => c.isSelected && c.photoFile === null && c.previewUrl,
     );
 
     // Verificar que hay al menos un color con foto (nueva o existente)
@@ -1203,7 +1295,7 @@ export class NuevoModeloModalComponent {
     // Si hay fotos nuevas, subirlas a Cloudinary
     if (coloresConFotoNueva.length > 0) {
       const uploadObservables = coloresConFotoNueva.map((color) =>
-        this.cloudinaryService.uploadImage(color.photoFile!, idCategoria.toString())
+        this.cloudinaryService.uploadImage(color.photoFile!, idCategoria.toString()),
       );
 
       forkJoin(uploadObservables).subscribe({
@@ -1245,7 +1337,7 @@ export class NuevoModeloModalComponent {
   private saveModeloToBackend(
     coloresPayload: { idColor: number; fotoUrl: string }[],
     draft: FormDraftState,
-    isEditMode: boolean
+    isEditMode: boolean,
   ) {
     const payload = {
       nombreModelo: draft.nombreModelo,
@@ -1266,7 +1358,7 @@ export class NuevoModeloModalComponent {
         this.saving.set(false);
         this.toastService.success(
           isEditMode ? 'Modelo actualizado exitosamente' : 'Modelo creado exitosamente',
-          4000
+          4000,
         );
         this.modeloCreated.emit();
         this.onClose();
@@ -1276,7 +1368,7 @@ export class NuevoModeloModalComponent {
         console.error(isEditMode ? 'Error al actualizar modelo:' : 'Error al crear modelo:', err);
         this.toastService.error(
           isEditMode ? 'Error al actualizar el modelo' : 'Error al crear el modelo',
-          4000
+          4000,
         );
       },
     });
