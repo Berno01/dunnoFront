@@ -32,6 +32,8 @@ export class DashboardService {
       if (filters.idSucursal) params = params.set('idSucursal', filters.idSucursal.toString());
       if (filters.fechaInicio) params = params.set('fechaInicio', filters.fechaInicio);
       if (filters.fechaFin) params = params.set('fechaFin', filters.fechaFin);
+      if (filters.categoria) params = params.set('categoria', filters.categoria);
+      if (filters.limit != null) params = params.set('limit', filters.limit.toString());
     }
     return params;
   }

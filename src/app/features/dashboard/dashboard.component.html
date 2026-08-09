@@ -131,6 +131,25 @@
           </div>
           }
 
+          <!-- Categoria Active Filter Badge -->
+          @if (selectedCategory()) {
+          <div class="flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-700 py-1.5 px-3 rounded-lg text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+            </svg>
+            <span>{{ selectedCategory() }}</span>
+            <button
+              (click)="clearCategory()"
+              class="ml-1 hover:bg-blue-100 rounded-full p-0.5 transition-colors"
+              title="Quitar filtro de categoria"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          }
+
           <!-- Export Button -->
           <button
             (click)="exportarExcel()"

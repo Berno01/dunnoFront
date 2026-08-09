@@ -80,6 +80,7 @@ export class DashboardComponent implements OnInit {
   // Filters
   selectedRange = signal<string>('hoy');
   selectedSucursal = signal<number | null>(null); // Default null (Todas)
+  selectedCategory = signal<string | null>(null); // Categoria activa para filtrar
 
   // Date Picker State
   showDatePicker = signal(false);
@@ -154,6 +155,20 @@ export class DashboardComponent implements OnInit {
     this.loadData();
   }
 
+  toggleCategory(catName: string) {
+    if (this.selectedCategory() === catName) {
+      this.selectedCategory.set(null);
+    } else {
+      this.selectedCategory.set(catName);
+    }
+    this.loadData();
+  }
+
+  clearCategory() {
+    this.selectedCategory.set(null);
+    this.loadData();
+  }
+
   loadData() {
     this.isLoading.set(true);
 
@@ -166,6 +181,12 @@ export class DashboardComponent implements OnInit {
     // Apply Date Filters
     filters.fechaInicio = this.customStartDate();
     filters.fechaFin = this.customEndDate();
+
+    // Apply Categoria Filter
+    if (this.selectedCategory()) {
+      filters.categoria = this.selectedCategory()!;
+      filters.limit = 0; // Sin limite cuando hay categoria seleccionada
+    }
 
     forkJoin({
       kpis: this.dashboardService.getKPIs(filters),
@@ -291,12 +312,21 @@ export class DashboardComponent implements OnInit {
         height: 350,
         toolbar: { show: false },
         fontFamily: 'inherit',
+        events: {
+          click: (event: any, chartContext: any, config: any) => {
+            if (config.dataPointIndex >= 0) {
+              const catName = categoryLabels[config.dataPointIndex];
+              this.toggleCategory(catName);
+            }
+          },
+        },
       },
       plotOptions: {
         bar: {
           horizontal: true,
           borderRadius: 4,
           barHeight: '50%',
+          cursor: 'pointer',
         },
       },
       dataLabels: { enabled: false },
@@ -324,6 +354,9 @@ export class DashboardComponent implements OnInit {
     }
     filters.fechaInicio = this.customStartDate();
     filters.fechaFin = this.customEndDate();
+    if (this.selectedCategory()) {
+      filters.categoria = this.selectedCategory()!;
+    }
 
     this.dashboardService.getVentasExport(filters).subscribe({
       next: async (rows) => {

@@ -58,4 +58,6 @@ export interface DashboardFilters {
   idSucursal?: number;
   fechaInicio?: string;
   fechaFin?: string;
+  categoria?: string;
+  limit?: number;
 }
