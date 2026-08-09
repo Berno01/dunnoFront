@@ -79,8 +79,8 @@ export class DashboardComponent implements OnInit {
 
   // Filters
   selectedRange = signal<string>('hoy');
-  selectedSucursal = signal<number | null>(null); // Default null (Todas)
-  selectedCategory = signal<string | null>(null); // Categoria activa para filtrar
+  selectedSucursal = signal<number | null>(null);
+  selectedCategory = signal<string | null>(null);
 
   // Date Picker State
   showDatePicker = signal(false);
@@ -93,15 +93,12 @@ export class DashboardComponent implements OnInit {
   salesByCategoryOptions: Partial<ChartOptions> | any = {};
 
   ngOnInit() {
-    // Initialize with default filters
-    // Si es admin, empezamos con null (Todas). Si es vendedor, con su sucursal.
     if (this.authService.getUser()?.rol === 'ADMIN') {
       this.selectedSucursal.set(null);
     } else {
       this.selectedSucursal.set(this.sessionService.sucursalId());
     }
 
-    // Init dates
     const hoy = this.dashboardService.getRangoHoy();
     this.customStartDate.set(hoy.fechaInicio);
     this.customEndDate.set(hoy.fechaFin);
@@ -178,14 +175,12 @@ export class DashboardComponent implements OnInit {
       filters.idSucursal = this.selectedSucursal()!;
     }
 
-    // Apply Date Filters
     filters.fechaInicio = this.customStartDate();
     filters.fechaFin = this.customEndDate();
 
-    // Apply Categoria Filter
     if (this.selectedCategory()) {
       filters.categoria = this.selectedCategory()!;
-      filters.limit = 0; // Sin limite cuando hay categoria seleccionada
+      filters.limit = 0;
     }
 
     forkJoin({
@@ -201,7 +196,6 @@ export class DashboardComponent implements OnInit {
         this.ventasPorHora.set(data.ventasHora);
         this.ventasPorCategoria.set(data.ventasCat);
 
-        // Calcular porcentajes para métodos de pago
         const totalMetodos = data.metodos.reduce((acc, curr) => acc + curr.cantidad, 0);
         const metodosConPorcentaje = data.metodos.map((m) => ({
           ...m,
@@ -223,14 +217,8 @@ export class DashboardComponent implements OnInit {
   }
 
   initCharts() {
-    // 1. Ventas por Hora (Area Chart)
-    // Generamos las 24 horas del día (0-23)
     const fullHours = Array.from({ length: 24 }, (_, i) => i);
-
-    // Creamos un mapa para búsqueda rápida de las ventas existentes
     const salesMap = new Map(this.ventasPorHora().map((v) => [v.hora, v.cantidad]));
-
-    // Mapeamos las 24 horas: si existe venta usamos su cantidad, si no 0
     const salesData = fullHours.map((h) => salesMap.get(h) || 0);
     const categories = fullHours.map((h) => `${h}:00`);
 
@@ -296,7 +284,6 @@ export class DashboardComponent implements OnInit {
       },
     };
 
-    // 2. Ventas por Categoría (Bar Chart)
     const categoryLabels = this.ventasPorCategoria().map((v) => v.categoria);
     const quantities = this.ventasPorCategoria().map((v) => v.cantidad);
 
@@ -400,9 +387,11 @@ export class DashboardComponent implements OnInit {
       bottom: { style: 'thin' as const },
       right: { style: 'thin' as const },
     };
-    const summaryFont = { bold: true };
-    const summaryFill = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFFFF3CD' } };
-    const grandFont = { bold: true, color: { argb: 'FFFFFFFF' } };
+    const marcaFont = { bold: true, size: 12 };
+    const marcaFill = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFF0F0F0' } };
+    const subtotalFont = { bold: true };
+    const subtotalFill = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FFFFF3CD' } };
+    const grandFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
     const grandFill = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: 'FF333333' } };
     const grandBorder = {
       top: { style: 'medium' as const },
@@ -410,12 +399,8 @@ export class DashboardComponent implements OnInit {
       bottom: { style: 'medium' as const },
       right: { style: 'thin' as const },
     };
-    const colWidths = [18, 8, 28, 18, 15, 15, 14, 14, 14, 12, 14, 14, 14, 14];
-    const headers = [
-      'Fecha y Hora', 'Cant', 'Modelo', 'Categoria', 'Marca', 'Corte',
-      'P. Unit. (Bs)', 'Subtotal (Bs)',
-      'Efectivo (Bs)', 'QR (Bs)', 'Tarjeta (Bs)', 'Giftcard (Bs)', 'Descuento (Bs)', 'Total Venta (Bs)',
-    ];
+    const paymentLabelFont = { bold: true, size: 11 };
+    const colWidths = [22, 20, 20, 18];
 
     sucursalMap.forEach((sucData) => {
       const sheet = workbook.addWorksheet(sucData.nombre.substring(0, 31));
@@ -424,7 +409,7 @@ export class DashboardComponent implements OnInit {
         sheet.getColumn(i + 1).width = w;
       });
 
-      const headerRow = sheet.addRow(headers);
+      const headerRow = sheet.addRow(['Marca', 'Corte', 'Cantidad Vendida', 'Subtotal (Bs)']);
       headerRow.eachCell((cell) => {
         cell.font = headerFont;
         cell.fill = headerFill;
@@ -432,140 +417,114 @@ export class DashboardComponent implements OnInit {
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       });
 
-      const dayMap = new Map<string, VentaExportRow[]>();
+      const marcaCorteMap = new Map<string, Map<string, { cantidad: number; subtotal: number }>>();
       sucData.rows.forEach((row) => {
-        const date = new Date(row.fecha_venta);
-        const key = [
-          date.getFullYear(),
-          String(date.getMonth() + 1).padStart(2, '0'),
-          String(date.getDate()).padStart(2, '0'),
-        ].join('-');
-        if (!dayMap.has(key)) dayMap.set(key, []);
-        dayMap.get(key)!.push(row);
+        const marca = row.marca || 'Sin Marca';
+        const corte = row.corte || 'Sin Corte';
+        if (!marcaCorteMap.has(marca)) {
+          marcaCorteMap.set(marca, new Map());
+        }
+        const corteMap = marcaCorteMap.get(marca)!;
+        if (!corteMap.has(corte)) {
+          corteMap.set(corte, { cantidad: 0, subtotal: 0 });
+        }
+        const entry = corteMap.get(corte)!;
+        entry.cantidad += row.cantidad;
+        entry.subtotal += row.total_detalle;
       });
 
-      let grandUnidades = 0;
+      const sortedMarcas = Array.from(marcaCorteMap.keys()).sort((a, b) =>
+        a.localeCompare(b, 'es', { sensitivity: 'base' })
+      );
+
+      let grandCantidad = 0;
       let grandSubtotal = 0;
-      let grandEfectivo = 0;
-      let grandQr = 0;
-      let grandTarjeta = 0;
-      let grandGiftcard = 0;
-      let grandDescuento = 0;
-      let grandTotal = 0;
 
-      const sortedDays = Array.from(dayMap.keys()).sort();
+      sortedMarcas.forEach((marca) => {
+        const corteMap = marcaCorteMap.get(marca)!;
+        const sortedCortes = Array.from(corteMap.keys()).sort((a, b) =>
+          a.localeCompare(b, 'es', { sensitivity: 'base' })
+        );
 
-      sortedDays.forEach((dayKey) => {
-        const dayRows = dayMap.get(dayKey)!;
+        let marcaCantidad = 0;
+        let marcaSubtotal = 0;
 
-        const categoriesInDay = new Set(dayRows.map((r) => r.categoria));
-        let sorted: VentaExportRow[];
-        if (categoriesInDay.size > 1) {
-          sorted = [...dayRows].sort((a, b) => {
-            const catCmp = a.categoria.localeCompare(b.categoria);
-            if (catCmp !== 0) return catCmp;
-            return new Date(a.fecha_venta).getTime() - new Date(b.fecha_venta).getTime();
-          });
-        } else {
-          sorted = [...dayRows].sort(
-            (a, b) => new Date(a.fecha_venta).getTime() - new Date(b.fecha_venta).getTime()
-          );
-        }
-
-        sorted.forEach((row) => {
-          const date = new Date(row.fecha_venta);
-          const dateStr = [
-            String(date.getDate()).padStart(2, '0'),
-            String(date.getMonth() + 1).padStart(2, '0'),
-            date.getFullYear(),
-          ].join('/') + ' ' + [
-            String(date.getHours()).padStart(2, '0'),
-            String(date.getMinutes()).padStart(2, '0'),
-          ].join(':');
-
-          sheet.addRow([
-            dateStr,
-            row.cantidad,
-            row.nombre_modelo,
-            row.categoria,
-            row.marca,
-            row.corte,
-            row.precio_unitario,
-            row.total_detalle,
-            '', '', '', '', '', '',
-          ]);
+        const marcaRow = sheet.addRow([marca.toUpperCase(), '', '', '']);
+        marcaRow.eachCell((cell) => {
+          cell.font = marcaFont;
+          cell.fill = marcaFill;
+          cell.border = thinBorder;
         });
 
-        const totalUnidades = sorted.reduce((s, r) => s + r.cantidad, 0);
-        const totalSubtotal = sorted.reduce((s, r) => s + r.total_detalle, 0);
-
-        const ventasUnicas = new Set<number>();
-        let efecDia = 0,
-          qrDia = 0,
-          tarjDia = 0,
-          giftDia = 0,
-          descDia = 0,
-          totalDia = 0;
-        sorted.forEach((r) => {
-          if (!ventasUnicas.has(r.id_venta)) {
-            ventasUnicas.add(r.id_venta);
-            efecDia += r.monto_efectivo;
-            qrDia += r.monto_qr;
-            tarjDia += r.monto_tarjeta;
-            giftDia += r.monto_giftcard;
-            descDia += r.descuento;
-            totalDia += r.total_venta;
-          }
+        sortedCortes.forEach((corte) => {
+          const entry = corteMap.get(corte)!;
+          sheet.addRow(['', corte, entry.cantidad, entry.subtotal]);
+          marcaCantidad += entry.cantidad;
+          marcaSubtotal += entry.subtotal;
         });
 
-        const summaryRow = sheet.addRow([
-          'TOTAL DIA ' + dayKey.split('-').reverse().join('/'),
-          totalUnidades,
-          '', '', '', '',
-          '',
-          totalSubtotal,
-          efecDia,
-          qrDia,
-          tarjDia,
-          giftDia,
-          descDia,
-          totalDia,
-        ]);
-        summaryRow.eachCell((cell) => {
-          cell.font = summaryFont;
-          cell.fill = summaryFill;
+        const subRow = sheet.addRow(['', 'Subtotal ' + marca, marcaCantidad, marcaSubtotal]);
+        subRow.eachCell((cell) => {
+          cell.font = subtotalFont;
+          cell.fill = subtotalFill;
           cell.border = thinBorder;
         });
 
         sheet.addRow([]);
 
-        grandUnidades += totalUnidades;
-        grandSubtotal += totalSubtotal;
-        grandEfectivo += efecDia;
-        grandQr += qrDia;
-        grandTarjeta += tarjDia;
-        grandGiftcard += giftDia;
-        grandDescuento += descDia;
-        grandTotal += totalDia;
+        grandCantidad += marcaCantidad;
+        grandSubtotal += marcaSubtotal;
       });
 
-      const grandRow = sheet.addRow([
-        'GRAN TOTAL',
-        grandUnidades,
-        '', '', '', '',
-        '',
-        grandSubtotal,
-        grandEfectivo,
-        grandQr,
-        grandTarjeta,
-        grandGiftcard,
-        grandDescuento,
-        grandTotal,
-      ]);
+      const grandRow = sheet.addRow(['GRAN TOTAL', '', grandCantidad, grandSubtotal]);
       grandRow.eachCell((cell) => {
         cell.font = grandFont;
         cell.fill = grandFill;
         cell.border = grandBorder;
+      });
+
+      sheet.addRow([]);
+      sheet.addRow([]);
+
+      const tituloPagos = sheet.addRow(['RESUMEN DE PAGOS DEL PERIODO']);
+      tituloPagos.getCell(1).font = { bold: true, size: 12 };
+
+      const ventasUnicas = new Set<number>();
+      let totalEfectivo = 0,
+        totalQr = 0,
+        totalTarjeta = 0,
+        totalGiftcard = 0,
+        totalDescuento = 0,
+        totalVentas = 0;
+      sucData.rows.forEach((r) => {
+        if (!ventasUnicas.has(r.id_venta)) {
+          ventasUnicas.add(r.id_venta);
+          totalEfectivo += r.monto_efectivo;
+          totalQr += r.monto_qr;
+          totalTarjeta += r.monto_tarjeta;
+          totalGiftcard += r.monto_giftcard;
+          totalDescuento += r.descuento;
+          totalVentas += r.total_venta;
+        }
+      });
+
+      const pagoHeaders = ['Efectivo (Bs)', 'QR (Bs)', 'Tarjeta (Bs)', 'Giftcard (Bs)', 'Descuento (Bs)', 'Total Ventas (Bs)'];
+      const pagoRow = sheet.addRow(pagoHeaders);
+      pagoRow.eachCell((cell) => {
+        cell.font = headerFont;
+        cell.fill = headerFill;
+        cell.border = thinBorder;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      });
+
+      const pagoValores = sheet.addRow([totalEfectivo, totalQr, totalTarjeta, totalGiftcard, totalDescuento, totalVentas]);
+      pagoValores.eachCell((cell) => {
+        cell.font = paymentLabelFont;
+        cell.border = thinBorder;
+      });
+
+      [5, 6, 7, 8, 9, 10].forEach((col) => {
+        sheet.getColumn(col).width = 17;
       });
     });
 
