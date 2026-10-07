@@ -61,3 +61,50 @@ export interface DashboardFilters {
   categoria?: string;
   limit?: number;
 }
+
+export interface InventoryReportFilters {
+  idSucursal: number | null;
+  idCategoria: number | null;
+  idMarca: number | null;
+  idCorte: number | null;
+  idColor: number | null;
+  idTalla: number | null;
+}
+
+export interface InventoryReportRow {
+  id_sucursal: number;
+  nombre_sucursal: string;
+  id_modelo: number;
+  nombre_modelo: string;
+  precio: number;
+  id_categoria: number | null;
+  categoria: string;
+  id_marca: number | null;
+  marca: string;
+  id_corte: number | null;
+  corte: string;
+  id_modelo_color: number;
+  id_color: number;
+  color: string;
+  codigo_hex: string | null;
+  foto_url: string | null;
+  id_variante: number;
+  id_talla: number;
+  talla: string;
+  stock: number;
+}
+
+export interface InventoryReportOption {
+  id: number;
+  nombre: string;
+  codigo_hex?: string | null;
+}
+
+export interface InventoryReportOptions {
+  sucursales: InventoryReportOption[];
+  categorias: InventoryReportOption[];
+  marcas: InventoryReportOption[];
+  cortes: InventoryReportOption[];
+  colores: InventoryReportOption[];
+  tallas: InventoryReportOption[];
+}

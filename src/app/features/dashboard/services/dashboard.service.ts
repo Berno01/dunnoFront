@@ -11,6 +11,9 @@ import {
   TopProducto,
   DashboardFilters,
   VentaExportRow,
+  InventoryReportFilters,
+  InventoryReportOptions,
+  InventoryReportRow,
 } from '../models/dashboard.models';
 
 @Injectable({
@@ -85,6 +88,31 @@ export class DashboardService {
       headers: this.getHeaders(),
       params: this.getParams(filters),
     });
+  }
+
+  getInventoryReportOptions(): Observable<InventoryReportOptions> {
+    return this.http.get<InventoryReportOptions>(`${this.apiUrl}/inventario-export/opciones`);
+  }
+
+  getInventoryReport(filters: InventoryReportFilters): Observable<InventoryReportRow[]> {
+    let params = new HttpParams();
+    const filterParams: Array<[keyof InventoryReportFilters, string]> = [
+      ['idSucursal', 'idSucursal'],
+      ['idCategoria', 'idCategoria'],
+      ['idMarca', 'idMarca'],
+      ['idCorte', 'idCorte'],
+      ['idColor', 'idColor'],
+      ['idTalla', 'idTalla'],
+    ];
+
+    for (const [filterKey, queryKey] of filterParams) {
+      const value = filters[filterKey];
+      if (value !== null && value !== undefined) {
+        params = params.set(queryKey, value.toString());
+      }
+    }
+
+    return this.http.get<InventoryReportRow[]>(`${this.apiUrl}/inventario-export`, { params });
   }
 
   // Helpers de Fechas

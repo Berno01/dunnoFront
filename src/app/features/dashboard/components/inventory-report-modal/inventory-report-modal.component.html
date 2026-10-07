@@ -1,0 +1,199 @@
+<div
+  class="fixed inset-0 z-[100] flex items-end justify-center bg-gray-950/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-5"
+  role="presentation"
+  (click)="onBackdropClick($event)"
+  (keydown.escape)="onEscape()"
+>
+  <section
+    class="flex max-h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="inventory-report-title"
+    tabindex="-1"
+  >
+    <header class="flex items-start justify-between border-b border-gray-100 px-5 py-5 sm:px-7">
+      <div class="flex items-start gap-3.5">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gray-900 text-white">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v11a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-11zM4 9h16M9 9v11m6-11v11"></path>
+          </svg>
+        </div>
+        <div>
+          <p class="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">Reporte · Estado actual</p>
+          <h2 id="inventory-report-title" class="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+            Inventario por sucursal
+          </h2>
+          <p class="mt-1 max-w-lg text-sm leading-5 text-gray-500">
+            Configura qué existencias incluir en tu archivo Excel.
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="dismiss.emit()"
+        [disabled]="isGenerating()"
+        autofocus
+        class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Cerrar"
+      >
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </header>
+
+    <form class="min-h-0 overflow-y-auto" (ngSubmit)="submit()">
+      <div class="space-y-6 px-5 py-5 sm:px-7 sm:py-6">
+        @if (optionsLoading()) {
+          <div class="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-600" role="status">
+            <svg class="h-5 w-5 animate-spin text-gray-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z"></path>
+            </svg>
+            Cargando sucursales y opciones...
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-medium text-gray-700">Sucursal</span>
+              <select name="branch" [(ngModel)]="selectedBranch" [disabled]="isGenerating()" class="report-select">
+                <option [ngValue]="null">Todas las sucursales</option>
+                @for (option of options().sucursales; track option.id) {
+                  <option [ngValue]="option.id">{{ option.nombre }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-medium text-gray-700">Categoría</span>
+              <select name="category" [(ngModel)]="selectedCategory" [disabled]="isGenerating()" class="report-select">
+                <option [ngValue]="null">Todas las categorías</option>
+                @for (option of options().categorias; track option.id) {
+                  <option [ngValue]="option.id">{{ option.nombre }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-medium text-gray-700">Marca</span>
+              <select name="brand" [(ngModel)]="selectedBrand" [disabled]="isGenerating()" class="report-select">
+                <option [ngValue]="null">Todas las marcas</option>
+                @for (option of options().marcas; track option.id) {
+                  <option [ngValue]="option.id">{{ option.nombre }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-medium text-gray-700">Corte</span>
+              <select name="cut" [(ngModel)]="selectedCut" [disabled]="isGenerating()" class="report-select">
+                <option [ngValue]="null">Todos los cortes</option>
+                @for (option of options().cortes; track option.id) {
+                  <option [ngValue]="option.id">{{ option.nombre }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-medium text-gray-700">Color</span>
+              <select name="color" [(ngModel)]="selectedColor" [disabled]="isGenerating()" class="report-select">
+                <option [ngValue]="null">Todos los colores</option>
+                @for (option of options().colores; track option.id) {
+                  <option [ngValue]="option.id">{{ option.nombre }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-medium text-gray-700">Talla</span>
+              <select name="size" [(ngModel)]="selectedSize" [disabled]="isGenerating()" class="report-select">
+                <option [ngValue]="null">Todas las tallas</option>
+                @for (option of options().tallas; track option.id) {
+                  <option [ngValue]="option.id">{{ option.nombre }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <label class="flex cursor-pointer items-start gap-3.5" for="include-inventory-photos">
+              <input
+                id="include-inventory-photos"
+                name="includePhotos"
+                type="checkbox"
+                [(ngModel)]="includePhotos"
+                [disabled]="isGenerating()"
+                class="mt-0.5 h-4 w-4 rounded border-gray-300 accent-gray-900 focus:ring-gray-900"
+              />
+              <span class="min-w-0 flex-1">
+                <span class="flex flex-wrap items-center gap-2 text-sm font-semibold text-gray-900">
+                  Incluir fotografías
+                  <span class="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 ring-1 ring-gray-200">Recomendado</span>
+                </span>
+                <span class="mt-1 block text-xs leading-5 text-gray-500">
+                  Añade una miniatura por diseño y color. Sin fotos, el archivo se genera más rápido y queda más ligero.
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <div class="flex gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3.5 text-sm text-blue-900">
+            <svg class="mt-0.5 h-5 w-5 shrink-0 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="leading-5">
+              El Excel tendrá una pestaña por sucursal y una fila por diseño y color; las tallas serán columnas. Solo se muestran variantes con existencias disponibles.
+            </p>
+          </div>
+        }
+      </div>
+
+      <footer class="flex flex-col-reverse gap-3 border-t border-gray-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+        <div class="min-h-5 text-xs text-gray-500" aria-live="polite">
+          @if (isGenerating()) {
+            <span class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-600"></span>
+              {{ progress() || 'Preparando el archivo...' }}
+            </span>
+          }
+        </div>
+        <div class="flex flex-col-reverse gap-2 sm:flex-row">
+          <button
+            type="button"
+            (click)="resetFilters()"
+            [disabled]="isGenerating() || optionsLoading()"
+            class="rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-100 disabled:opacity-40"
+          >
+            Restablecer
+          </button>
+          <button
+            type="button"
+            (click)="dismiss.emit()"
+            [disabled]="isGenerating()"
+            class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-40"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="optionsLoading() || isGenerating()"
+            class="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            @if (isGenerating()) {
+              <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z"></path>
+              </svg>
+              Generando...
+            } @else {
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3v12m0 0l-4-4m4 4l4-4M5 17v3h14v-3"></path>
+              </svg>
+              Descargar Excel
+            }
+          </button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>

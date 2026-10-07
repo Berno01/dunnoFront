@@ -5,8 +5,11 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { forkJoin } from 'rxjs';
 import ExcelJS from 'exceljs';
 import { DashboardService } from './services/dashboard.service';
+import { InventoryReportExcelService } from './services/inventory-report-excel.service';
+import { InventoryReportModalComponent } from './components/inventory-report-modal/inventory-report-modal.component';
 import { SessionService } from '../../core/services/session.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 import {
   DashboardKPIs,
   VentasPorHora,
@@ -16,6 +19,8 @@ import {
   TopProducto,
   DashboardFilters,
   VentaExportRow,
+  InventoryReportFilters,
+  InventoryReportOptions,
 } from './models/dashboard.models';
 
 import {
@@ -47,10 +52,19 @@ export type ChartOptions = {
   colors: string[];
 };
 
+const EMPTY_INVENTORY_REPORT_OPTIONS: InventoryReportOptions = {
+  sucursales: [],
+  categorias: [],
+  marcas: [],
+  cortes: [],
+  colores: [],
+  tallas: [],
+};
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgApexchartsModule],
+  imports: [CommonModule, FormsModule, NgApexchartsModule, InventoryReportModalComponent],
   templateUrl: './dashboard.component.html',
   styles: [
     `
@@ -62,12 +76,20 @@ export type ChartOptions = {
 })
 export class DashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
+  private inventoryReportExcelService = inject(InventoryReportExcelService);
+  private toastService = inject(ToastService);
   public sessionService = inject(SessionService);
   public authService = inject(AuthService);
 
   // State
   isLoading = signal<boolean>(true);
   isExporting = signal<boolean>(false);
+  showInventoryReportModal = signal<boolean>(false);
+  isLoadingInventoryReportOptions = signal<boolean>(false);
+  isGeneratingInventoryReport = signal<boolean>(false);
+  inventoryReportProgress = signal<string>('');
+  inventoryReportOptions = signal<InventoryReportOptions>(EMPTY_INVENTORY_REPORT_OPTIONS);
+  private inventoryReportOptionsLoaded = false;
 
   // Data Signals
   kpis = signal<DashboardKPIs | null>(null);
@@ -330,6 +352,127 @@ export class DashboardComponent implements OnInit {
   getSucursalName(id: number): string {
     const sucursales: { [key: number]: string } = { 1: 'Tarija', 2: 'Cochabamba', 3: 'Santa Cruz' };
     return sucursales[id] || 'Desconocida';
+  }
+
+  openInventoryReportModal(): void {
+    this.showInventoryReportModal.set(true);
+    if (this.inventoryReportOptionsLoaded || this.isLoadingInventoryReportOptions()) return;
+
+    this.isLoadingInventoryReportOptions.set(true);
+    this.dashboardService.getInventoryReportOptions().subscribe({
+      next: (options) => {
+        this.inventoryReportOptions.set(options);
+        this.inventoryReportOptionsLoaded = true;
+        this.isLoadingInventoryReportOptions.set(false);
+      },
+      error: (error) => {
+        console.error('Error cargando opciones del reporte de inventario', error);
+        this.isLoadingInventoryReportOptions.set(false);
+        this.showInventoryReportModal.set(false);
+        this.toastService.error('No se pudieron cargar las opciones del reporte. Inténtalo nuevamente.');
+      },
+    });
+  }
+
+  exportInventoryReport(request: { filters: InventoryReportFilters; includePhotos: boolean }): void {
+    this.isGeneratingInventoryReport.set(true);
+    this.inventoryReportProgress.set('Consultando existencias actuales...');
+
+    this.dashboardService.getInventoryReport(request.filters).subscribe({
+      next: async (rows) => {
+        if (!rows.length) {
+          this.isGeneratingInventoryReport.set(false);
+          this.inventoryReportProgress.set('');
+          this.toastService.info('No se encontraron existencias para los filtros seleccionados.');
+          return;
+        }
+
+        try {
+          const filterSummary = this.describeInventoryFilters(request.filters);
+          this.inventoryReportProgress.set(
+            request.includePhotos ? 'Preparando miniaturas y pestañas...' : 'Organizando pestañas por sucursal...',
+          );
+          const result = await this.inventoryReportExcelService.createWorkbook(
+            rows,
+            this.inventoryReportOptions()
+              .sucursales.filter(
+                (branch) => request.filters.idSucursal === null || branch.id === request.filters.idSucursal,
+              ),
+            request.includePhotos,
+            filterSummary,
+            (completed, total) => {
+              this.inventoryReportProgress.set(`Preparando fotografías ${completed} de ${total}...`);
+            },
+          );
+
+          this.inventoryReportProgress.set('Iniciando descarga...');
+          this.downloadInventoryWorkbook(result.blob);
+          this.showInventoryReportModal.set(false);
+          this.toastService.success(
+            `Excel listo: ${result.designColorCount} filas diseño-color en ${result.branchCount} sucursal(es).`,
+            5000,
+          );
+
+          if (result.failedPhotos > 0 || result.skippedPhotos > 0) {
+            const unavailable = result.failedPhotos + result.skippedPhotos;
+            this.toastService.warning(
+              `${unavailable} fotografía(s) no se pudieron incrustar. El reporte incluye enlaces cuando están disponibles.`,
+              7000,
+            );
+          }
+        } catch (error) {
+          console.error('Error generando el Excel de inventario', error);
+          this.toastService.error('No se pudo generar el Excel. Inténtalo nuevamente.');
+        } finally {
+          this.isGeneratingInventoryReport.set(false);
+          this.inventoryReportProgress.set('');
+        }
+      },
+      error: (error) => {
+        console.error('Error consultando el inventario para exportación', error);
+        this.isGeneratingInventoryReport.set(false);
+        this.inventoryReportProgress.set('');
+        this.toastService.error('No se pudo obtener el inventario. Revisa tu conexión e inténtalo nuevamente.');
+      },
+    });
+  }
+
+  private describeInventoryFilters(filters: InventoryReportFilters): string {
+    const options = this.inventoryReportOptions();
+    const selected: string[] = [];
+    const addFilter = (
+      label: string,
+      id: number | null,
+      choices: InventoryReportOptions['sucursales'],
+    ) => {
+      if (id === null) return;
+      const value = choices.find((option) => option.id === id)?.nombre;
+      if (value) selected.push(`${label}: ${value}`);
+    };
+
+    addFilter('Sucursal', filters.idSucursal, options.sucursales);
+    addFilter('Categoría', filters.idCategoria, options.categorias);
+    addFilter('Marca', filters.idMarca, options.marcas);
+    addFilter('Corte', filters.idCorte, options.cortes);
+    addFilter('Color', filters.idColor, options.colores);
+    addFilter('Talla', filters.idTalla, options.tallas);
+    return selected.length ? selected.join(' · ') : 'Todos los filtros';
+  }
+
+  private downloadInventoryWorkbook(blob: Blob): void {
+    const date = new Date();
+    const filename = `inventario_${date.getFullYear()}-${(date.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}.xlsx`;
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   }
 
   exportarExcelAgrupado() {

@@ -8,7 +8,7 @@
           <p class="text-sm text-gray-500">Resumen de ventas y métricas de tu negocio</p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3 md:justify-end">
           <!-- Date Filter -->
           <div class="relative">
             <button
@@ -151,6 +151,7 @@
           }
 
           <!-- Export Buttons -->
+          <div class="flex flex-wrap items-center gap-2">
           <button
             (click)="exportarExcelDetallado()"
             [disabled]="isExporting()"
@@ -187,6 +188,25 @@
             }
             {{ isExporting() ? 'Exportando...' : 'Excel Marcas' }}
           </button>
+          <button
+            (click)="openInventoryReportModal()"
+            [disabled]="isGeneratingInventoryReport()"
+            class="flex items-center gap-2 bg-gray-900 border border-gray-900 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Descargar inventario actual por sucursal"
+          >
+            @if (isGeneratingInventoryReport()) {
+            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            } @else {
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6.5A2.5 2.5 0 016.5 4h11A2.5 2.5 0 0120 6.5v11a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 17.5v-11zM4 9h16M9 9v11m6-11v11"></path>
+            </svg>
+            }
+            {{ isGeneratingInventoryReport() ? 'Preparando inventario...' : 'Excel Inventario' }}
+          </button>
+          </div>
         </div>
       </div>
     </div>
@@ -495,3 +515,14 @@
     }
   </div>
 </div>
+
+@if (showInventoryReportModal()) {
+  <app-inventory-report-modal
+    [options]="inventoryReportOptions()"
+    [optionsLoading]="isLoadingInventoryReportOptions()"
+    [isGenerating]="isGeneratingInventoryReport()"
+    [progress]="inventoryReportProgress()"
+    (dismiss)="showInventoryReportModal.set(false)"
+    (exportRequested)="exportInventoryReport($event)"
+  ></app-inventory-report-modal>
+}
