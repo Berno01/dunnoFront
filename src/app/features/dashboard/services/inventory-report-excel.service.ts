@@ -29,8 +29,10 @@ interface EmbeddedPhoto {
 
 @Injectable({ providedIn: 'root' })
 export class InventoryReportExcelService {
-  private readonly maxEmbeddedPhotos = 100;
-  private readonly photoConcurrency = 4;
+  private readonly maxEmbeddedPhotos = 600;
+  private readonly photoConcurrency = 6;
+  private readonly photoAttempts = 3;
+  private readonly photoTimeoutMs = 20000;
   private readonly collator = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
   private readonly clothingSizeOrder = [
     '3XS', 'XXXS', '2XS', 'XXS', 'XS', 'CH', 'P', 'S', 'M', 'G', 'L', 'EG', 'XL', 'XG',
@@ -342,17 +344,7 @@ export class InventoryReportExcelService {
       while (nextIndex < urls.length) {
         const url = urls[nextIndex++];
         try {
-          const response = await fetch(this.thumbnailUrl(url), {
-            mode: 'cors',
-            credentials: 'omit',
-            signal: AbortSignal.timeout(8000),
-          });
-          if (!response.ok) throw new Error(`Image request failed: ${response.status}`);
-          const blob = await response.blob();
-          const extension = this.getImageExtension(blob.type);
-          if (!extension) throw new Error('Excel does not support this image format.');
-          const dataUrl = await this.readAsDataUrl(blob);
-          results.set(url, { dataUrl, extension });
+          results.set(url, await this.fetchPhotoWithRetry(url));
         } catch {
           // A missing/unavailable image must not prevent an inventory download.
         } finally {
@@ -364,6 +356,30 @@ export class InventoryReportExcelService {
 
     await Promise.all(Array.from({ length: workerCount }, () => worker()));
     return results;
+  }
+
+  private async fetchPhotoWithRetry(url: string): Promise<EmbeddedPhoto> {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= this.photoAttempts; attempt++) {
+      try {
+        const response = await fetch(this.thumbnailUrl(url), {
+          mode: 'cors',
+          credentials: 'omit',
+          signal: AbortSignal.timeout(this.photoTimeoutMs),
+        });
+        if (!response.ok) throw new Error(`Image request failed: ${response.status}`);
+        const blob = await response.blob();
+        const extension = this.getImageExtension(blob.type);
+        if (!extension) throw new Error('Excel does not support this image format.');
+        return { dataUrl: await this.readAsDataUrl(blob), extension };
+      } catch (error) {
+        lastError = error;
+        if (attempt < this.photoAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+        }
+      }
+    }
+    throw lastError;
   }
 
   private thumbnailUrl(imageUrl: string): string {
