@@ -29,10 +29,10 @@ interface EmbeddedPhoto {
 
 @Injectable({ providedIn: 'root' })
 export class InventoryReportExcelService {
-  private readonly maxEmbeddedPhotos = 600;
+  private readonly maxEmbeddedPhotos = 5000;
   private readonly photoConcurrency = 6;
-  private readonly photoAttempts = 3;
-  private readonly photoTimeoutMs = 20000;
+  private readonly photoAttempts = 4;
+  private readonly photoTimeoutMs = 60000;
   private readonly collator = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
   private readonly clothingSizeOrder = [
     '3XS', 'XXXS', '2XS', 'XXS', 'XS', 'CH', 'P', 'S', 'M', 'G', 'L', 'EG', 'XL', 'XG',
@@ -362,33 +362,66 @@ export class InventoryReportExcelService {
     let lastError: unknown;
     for (let attempt = 1; attempt <= this.photoAttempts; attempt++) {
       try {
-        const response = await fetch(this.thumbnailUrl(url), {
+        // Original file first; on later attempts ask Cloudinary for the same resolution as JPG.
+        const requestUrl = attempt >= 3 ? this.fullSizeJpgUrl(url) : this.safeUrl(url);
+        const response = await fetch(requestUrl, {
           mode: 'cors',
           credentials: 'omit',
           signal: AbortSignal.timeout(this.photoTimeoutMs),
         });
         if (!response.ok) throw new Error(`Image request failed: ${response.status}`);
         const blob = await response.blob();
-        const extension = this.getImageExtension(blob.type);
-        if (!extension) throw new Error('Excel does not support this image format.');
-        return { dataUrl: await this.readAsDataUrl(blob), extension };
+        const extension = this.getImageExtension(blob.type) ?? (await this.sniffExtension(blob));
+        if (extension) return { dataUrl: await this.readAsDataUrl(blob), extension };
+        return await this.convertToJpeg(blob);
       } catch (error) {
         lastError = error;
         if (attempt < this.photoAttempts) {
-          await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+          await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
         }
       }
     }
     throw lastError;
   }
 
-  private thumbnailUrl(imageUrl: string): string {
+  private async sniffExtension(blob: Blob): Promise<EmbeddedPhoto['extension'] | null> {
+    const bytes = new Uint8Array(await blob.slice(0, 4).arrayBuffer());
+    if (bytes[0] === 0xff && bytes[1] === 0xd8) return 'jpeg';
+    if (bytes[0] === 0x89 && bytes[1] === 0x50) return 'png';
+    if (bytes[0] === 0x47 && bytes[1] === 0x49) return 'gif';
+    return null;
+  }
+
+  /** Re-encodes formats Excel cannot embed (webp, avif, ...) at their original resolution. */
+  private async convertToJpeg(blob: Blob): Promise<EmbeddedPhoto> {
+    const bitmap = await createImageBitmap(blob);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Canvas not available.');
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(bitmap, 0, 0);
+      return { dataUrl: canvas.toDataURL('image/jpeg', 0.95), extension: 'jpeg' };
+    } finally {
+      bitmap.close();
+    }
+  }
+
+  private safeUrl(imageUrl: string): string {
     const parsed = new URL(imageUrl);
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
       throw new Error('Unsupported image URL.');
     }
+    return parsed.toString();
+  }
+
+  private fullSizeJpgUrl(imageUrl: string): string {
+    const parsed = new URL(this.safeUrl(imageUrl));
     if (parsed.hostname.endsWith('cloudinary.com') && parsed.pathname.includes('/upload/')) {
-      parsed.pathname = parsed.pathname.replace('/upload/', '/upload/w_180,h_180,c_limit,q_auto,f_jpg/');
+      parsed.pathname = parsed.pathname.replace('/upload/', '/upload/f_jpg,q_100/');
     }
     return parsed.toString();
   }
